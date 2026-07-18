@@ -39,7 +39,7 @@ public abstract class Node {
      * @param end         Indice di fine
      * @return Il valore dello SSE calcolato
      */
-    private double calculateVariance(Data trainingSet, int begin, int end) {
+    protected double calculateVariance(Data trainingSet, int begin, int end) {
         double sum = 0.0;
         double sumSq = 0.0;
         int n = end - begin + 1;
