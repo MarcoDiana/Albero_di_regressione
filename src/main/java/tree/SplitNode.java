@@ -39,10 +39,7 @@ public abstract class SplitNode extends Node {
          * @param numberChild Numero identificativo del figlio
          */
         SplitInfo(Object splitValue, int beginIndex, int endIndex, int numberChild) {
-            this.splitValue = splitValue;
-            this.beginIndex = beginIndex;
-            this.endIndex = endIndex;
-            this.numberChild = numberChild;
+            this(splitValue, beginIndex, endIndex, numberChild, "=");
         }
 
         /**
