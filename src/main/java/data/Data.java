@@ -24,28 +24,38 @@ public class Data {
     private ContinuousAttribute classAttribute;
 
     /**
-     * Costruttore di classe. Esegue il parsing del file configurando
-     * gli attributi esplicativi, l'attributo target e la matrice dei dati.
+     * Costruttore di classe. Esegue il parsing del file di testo per configurare
+     * gli attributi esplicativi, l'attributo target e popolare la matrice dei dati.
+     * Verifica la corretta formattazione logica e fisica del dataset.
      *
      * @param fileName Nome del file di testo contenente il dataset (es. "servo.dat")
+     * @throws TrainingDataException Sollevata in caso di acquisizione errata:
+     *                               file inesistente, schema mancante, dataset vuoto
+     *                               o privo di variabile target numerica.
      */
-    public Data(String fileName) {
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+    public Data(String fileName) throws TrainingDataException {
+        // Proviamo ad aprire il file
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(fileName))) {
             String line;
             int explanatoryCount = 0;
             int currentExample = 0;
+            boolean schemaFound = false;
 
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty()) continue;
 
-                // 1. Legge il numero totale di attributi indipendenti
+                // 1. Lettura numero totale di attributi indipendenti
                 if (line.startsWith("@schema")) {
                     int totalAttributes = Integer.parseInt(line.split("\\s+")[1]);
                     explanatorySet = new Attribute[totalAttributes];
+                    schemaFound = true;
                 }
-                // 2. Crea dinamicamente un DiscreteAttribute per ogni riga @desc
+                // 2. Creazione DiscreteAttribute per ogni riga @desc
                 else if (line.startsWith("@desc")) {
+                    if (!schemaFound) {
+                        throw new TrainingDataException("Schema mancante nel file: " + fileName);
+                    }
                     String[] tokens = line.split("\\s+");
                     String attrName = tokens[1];
                     String[] attrValues = tokens[2].split(",");
@@ -53,31 +63,63 @@ public class Data {
                     explanatorySet[explanatoryCount] = new DiscreteAttribute(attrName, explanatoryCount, attrValues);
                     explanatoryCount++;
                 }
-                // 3. Crea l'attributo continuo di classe target
+                // 3. Creazione attributo target continuo
                 else if (line.startsWith("@target")) {
                     String targetName = line.split("\\s+")[1];
                     classAttribute = new ContinuousAttribute(targetName, explanatoryCount);
                 }
-                // 4. Inizializza la matrice quando incontra il tag @data
+                // 4. Tag @data (alloca la memoria per la matrice)
                 else if (line.startsWith("@data")) {
-                    numberOfExamples = Integer.parseInt(line.split("\\s+")[1]);
+                    int declaredExamples = Integer.parseInt(line.split("\\s+")[1]);
+                    if (declaredExamples == 0) {
+                        throw new TrainingDataException("Training set vuoto (0 esempi dichiarati) nel file: " + fileName);
+                    }
+                    numberOfExamples = declaredExamples;
                     data = new Object[numberOfExamples][explanatoryCount + 1];
                 }
-                // 5. Popola la matrice con le righe di dati effettive
+                // 5. Popolamento matrice dati effettivi
                 else {
+                    // Controlli di integrità prima di inserire dati
+                    if (explanatorySet == null || !schemaFound) {
+                        throw new TrainingDataException("Schema mancante nel file: " + fileName);
+                    }
+                    if (classAttribute == null) {
+                        throw new TrainingDataException("Training set privo di variabile target numerica nel file: " + fileName);
+                    }
+
                     String[] values = line.split(",");
-                    // Popola gli attributi esplicativi indipendenti (String)
                     for (int j = 0; j < explanatorySet.length; j++) {
                         data[currentExample][j] = values[j].trim();
                     }
-                    // Popola l'attributo target di classe (convertito in Double)
                     int targetIndex = classAttribute.getIndex();
                     data[currentExample][targetIndex] = Double.valueOf(values[targetIndex].trim());
                     currentExample++;
                 }
             }
-        } catch (IOException e) {
-            System.err.println("Errore nella lettura del file: " + e.getMessage());
+
+            // A fine file, assicuriamoci che non fosse un file completamente bianco
+            // o con solo commenti e niente dati validi.
+            if (!schemaFound) {
+                throw new TrainingDataException("Schema mancante nel file: " + fileName);
+            }
+            if (classAttribute == null) {
+                throw new TrainingDataException("Training set privo di variabile target numerica nel file: " + fileName);
+            }
+            if (currentExample == 0 || numberOfExamples == 0) {
+                throw new TrainingDataException("Training set vuoto nel file: " + fileName);
+            }
+
+        } catch (java.io.FileNotFoundException e) {
+            // Se il file non esiste rilanciamo l'eccezione passandole la stringa di errore di sistema.
+            throw new TrainingDataException(e.toString());
+
+        } catch (java.io.IOException e) {
+            // Errore generico di lettura su disco
+            throw new TrainingDataException("Errore I/O durante la lettura del file: " + e.getMessage());
+
+        } catch (Exception e) {
+            // Catturiamo formattazioni errate (es. NumberFormatException) e lanciamo un errore coerente
+            throw new TrainingDataException("Formato del dataset anomalo o non valido: " + e.getMessage());
         }
     }
 
@@ -265,19 +307,29 @@ public class Data {
     }
 
     /**
-     * Metodo d'esecuzione per testare il funzionamento del caricamento dinamico e del sorting.
+     * Metodo d'esecuzione per testare il funzionamento del caricamento dinamico
+     * e gestire la possibile eccezione in caso di file anomalo.
      *
      * @param args Argomenti da linea di comando (non utilizzati)
      */
     public static void main(String[] args) {
-        Data trainingData = new Data("servo.dat");
-        System.out.println(trainingData);
-
-        if (trainingData.getNumberOfExplanatoryAttributes() > 0) {
-            Attribute attribute = trainingData.getExplanatoryAttribute(0);
-            System.out.println("ORDINAMENTO PER ATTRIBUTO: " + attribute.getName());
-            trainingData.sort(attribute, 0, trainingData.getNumberOfExamples() - 1);
+        try {
+            // Ora l'istruzione è protetta dal blocco try
+            Data trainingData = new Data("servo.dat");
             System.out.println(trainingData);
+
+            if (trainingData.getNumberOfExplanatoryAttributes() > 0) {
+                Attribute attribute = trainingData.getExplanatoryAttribute(0);
+                System.out.println("ORDINAMENTO PER ATTRIBUTO: " + attribute.getName());
+                trainingData.sort(attribute, 0, trainingData.getNumberOfExamples() - 1);
+                System.out.println(trainingData);
+            }
+
+        } catch (TrainingDataException e) {
+            // Se "servo.dat" è inesistente o anomalo, il programma non crasherà
+            // ma entrerà qui dentro e stamperà l'errore in modo pulito
+            System.out.println("ERRORE DI ACQUISIZIONE DATI:");
+            System.out.println(e.getMessage());
         }
     }
 }
