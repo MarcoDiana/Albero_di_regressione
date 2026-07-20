@@ -1,12 +1,13 @@
 package tree;
 
 import data.Data;
+import java.io.Serializable;
 
 /**
  * La classe astratta Node modella l'astrazione dell'entità nodo (fogliare o intermedio)
  * dell'albero di decisione.
  */
-public abstract class Node {
+public abstract class Node implements Serializable {
 
     private static int idNodeCount = 0;
 

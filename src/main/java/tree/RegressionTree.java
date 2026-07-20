@@ -1,10 +1,10 @@
 package tree;
 
 import data.Attribute;
-import data.Data;
-import data.Attribute;
-import data.Data;
+import data.ContinuousAttribute;
 import data.DiscreteAttribute;
+import data.Data;
+import java.io.Serializable;
 import java.util.TreeSet;
 import utility.Keyboard;
 
@@ -12,7 +12,7 @@ import utility.Keyboard;
  * La classe RegressionTree modella l'entità dell'intero albero di decisione
  * (di regressione) come un insieme di sotto-alberi, applicando di fatto il Pattern Composite.
  */
-public class RegressionTree {
+public class RegressionTree implements Serializable {
 
     /** Radice del sotto-albero corrente (può essere uno SplitNode o un LeafNode). */
     private Node root;
@@ -71,9 +71,15 @@ public class RegressionTree {
         // Testa tutti gli attributi indipendenti per trovare lo split migliore
         for (int i = 0; i < numAttributes; i++) {
             Attribute attr = trainingSet.getExplanatoryAttribute(i);
+            SplitNode currentNode;
 
-            // In questa esercitazione assumiamo attributi discreti
-            DiscreteNode currentNode = new DiscreteNode(trainingSet, begin, end, (DiscreteAttribute) attr);
+            // RTTI: Identifica a run-time se l'attributo è discreto o continuo
+            // per istanziare il nodo corretto
+            if (attr instanceof DiscreteAttribute) {
+                currentNode = new DiscreteNode(trainingSet, begin, end, (DiscreteAttribute) attr);
+            } else {
+                currentNode = new ContinuousNode(trainingSet, begin, end, (ContinuousAttribute) attr);
+            }
 
             // Aggiungiamo il nodo candidato al TreeSet, che lo ordinerà in base alla varianza
             ts.add(currentNode);
@@ -221,5 +227,34 @@ public class RegressionTree {
                 return childTree[risp].predictClass();
             }
         }
+    }
+
+    /**
+     * Serializza l'albero corrente e lo salva su disco.
+     *
+     * @param nomeFile Il nome (o percorso) del file binario in cui salvare l'albero
+     * @throws java.io.FileNotFoundException Se il percorso del file non è valido o inaccessibile
+     * @throws java.io.IOException           Se si verifica un errore durante la scrittura
+     */
+    public void salva(String nomeFile) throws java.io.FileNotFoundException, java.io.IOException {
+        java.io.ObjectOutputStream out = new java.io.ObjectOutputStream(new java.io.FileOutputStream(nomeFile));
+        out.writeObject(this);
+        out.close();
+    }
+
+    /**
+     * Carica un albero di regressione precedentemente salvato su disco.
+     *
+     * @param nomeFile Il nome del file binario da cui caricare l'albero
+     * @return L'oggetto RegressionTree ripristinato
+     * @throws java.io.FileNotFoundException  Se il file non esiste
+     * @throws java.io.IOException            Se si verifica un errore di I/O durante la lettura
+     * @throws ClassNotFoundException Se la classe serializzata non corrisponde
+     */
+    public static RegressionTree carica(String nomeFile) throws java.io.FileNotFoundException, java.io.IOException, ClassNotFoundException {
+        java.io.ObjectInputStream in = new java.io.ObjectInputStream(new java.io.FileInputStream(nomeFile));
+        RegressionTree tree = (RegressionTree) in.readObject();
+        in.close();
+        return tree;
     }
 }
