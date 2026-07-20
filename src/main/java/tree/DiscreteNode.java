@@ -2,7 +2,10 @@ package tree;
 
 import data.Attribute;
 import data.Data;
+import data.Attribute;
+import data.Data;
 import data.DiscreteAttribute;
+import java.util.ArrayList;
 
 /**
  * La classe DiscreteNode estende SplitNode e modella un nodo di split (bivio)
@@ -39,39 +42,26 @@ public class DiscreteNode extends SplitNode {
     @Override
     protected void setSplitInfo(Data trainingSet, int beginExampleIndex, int endExampleIndex, Attribute attribute) {
 
-        // FASE 1: Individuare quanti valori distinti (quanti rami) assume l'attributo.
-        // Essendo i dati già ordinati, i valori identici sono contigui.
-        int distinctValuesCount = 1;
-        Object currentValue = trainingSet.getExplanatoryValue(beginExampleIndex, attribute.getIndex());
+        // Inizializza la lista dinamica mapSplit ereditata dalla superclasse
+        super.mapSplit = new ArrayList<SplitInfo>();
 
-        for (int i = beginExampleIndex + 1; i <= endExampleIndex; i++) {
-            Object nextValue = trainingSet.getExplanatoryValue(i, attribute.getIndex());
-            if (!currentValue.equals(nextValue)) {
-                distinctValuesCount++;
-                currentValue = nextValue;
-            }
-        }
-
-        // FASE 2: Istanziare l'array mapSplit della superclasse con la giusta dimensione
-        super.mapSplit = new SplitInfo[distinctValuesCount];
-
-        // FASE 3: Popolare l'array creando gli oggetti SplitInfo per ogni partizione.
         int childIndex = 0;
         int currentBegin = beginExampleIndex;
-        currentValue = trainingSet.getExplanatoryValue(beginExampleIndex, attribute.getIndex());
+        Object currentValue = trainingSet.getExplanatoryValue(beginExampleIndex, attribute.getIndex());
 
+        // Un solo ciclo per scorrere i dati e generare i rami mano a mano
         for (int i = beginExampleIndex + 1; i <= endExampleIndex; i++) {
             Object nextValue = trainingSet.getExplanatoryValue(i, attribute.getIndex());
             if (!currentValue.equals(nextValue)) {
-                // Il valore è cambiato: chiudiamo la partizione corrente creando lo SplitInfo
-                super.mapSplit[childIndex] = new SplitInfo(currentValue, currentBegin, i - 1, childIndex);
+                // Il valore è cambiato: chiudiamo la partizione corrente aggiungendo il nuovo SplitInfo
+                super.mapSplit.add(new SplitInfo(currentValue, currentBegin, i - 1, childIndex));
                 childIndex++;
                 currentBegin = i;
                 currentValue = nextValue;
             }
         }
-        // Non dimentichiamo di chiudere e aggiungere l'ultimissima partizione
-        super.mapSplit[childIndex] = new SplitInfo(currentValue, currentBegin, endExampleIndex, childIndex);
+        // Aggiunta dell'ultima partizione residua
+        super.mapSplit.add(new SplitInfo(currentValue, currentBegin, endExampleIndex, childIndex));
     }
 
     /**
@@ -83,8 +73,8 @@ public class DiscreteNode extends SplitNode {
      */
     @Override
     public int testCondition(Object value) {
-        for (int i = 0; i < super.mapSplit.length; i++) {
-            if (super.mapSplit[i].getSplitValue().equals(value)) {
+        for (int i = 0; i < super.mapSplit.size(); i++) {
+            if (super.mapSplit.get(i).getSplitValue().equals(value)) {
                 return i;
             }
         }

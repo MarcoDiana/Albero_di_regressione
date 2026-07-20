@@ -3,6 +3,8 @@ package data;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * La classe Data modella l'insieme di esempi di training.
@@ -17,8 +19,8 @@ public class Data {
     // Cardinalità (numero di righe) del training set
     private int numberOfExamples;
 
-    // Array di oggetti Attribute per rappresentare gli attributi indipendenti (esplicativi)
-    private Attribute[] explanatorySet;
+    // Lista di oggetti Attribute per rappresentare gli attributi indipendenti (esplicativi)
+    private List<Attribute> explanatorySet;
 
     // Oggetto ContinuousAttribute per modellare l'attributo di classe target (numerico)
     private ContinuousAttribute classAttribute;
@@ -48,7 +50,7 @@ public class Data {
                 // 1. Lettura numero totale di attributi indipendenti
                 if (line.startsWith("@schema")) {
                     int totalAttributes = Integer.parseInt(line.split("\\s+")[1]);
-                    explanatorySet = new Attribute[totalAttributes];
+                    explanatorySet = new LinkedList<Attribute>();
                     schemaFound = true;
                 }
                 // 2. Creazione DiscreteAttribute per ogni riga @desc
@@ -60,7 +62,7 @@ public class Data {
                     String attrName = tokens[1];
                     String[] attrValues = tokens[2].split(",");
 
-                    explanatorySet[explanatoryCount] = new DiscreteAttribute(attrName, explanatoryCount, attrValues);
+                    explanatorySet.add(new DiscreteAttribute(attrName, explanatoryCount, attrValues));
                     explanatoryCount++;
                 }
                 // 3. Creazione attributo target continuo
@@ -88,7 +90,7 @@ public class Data {
                     }
 
                     String[] values = line.split(",");
-                    for (int j = 0; j < explanatorySet.length; j++) {
+                    for (int j = 0; j < explanatorySet.size(); j++) {
                         data[currentExample][j] = values[j].trim();
                     }
                     int targetIndex = classAttribute.getIndex();
@@ -138,7 +140,7 @@ public class Data {
      * @return Il numero di attributi esplicativi (int)
      */
     public int getNumberOfExplanatoryAttributes() {
-        return this.explanatorySet.length;
+        return this.explanatorySet.size();
     }
 
     /**
@@ -169,7 +171,7 @@ public class Data {
      * @return L'oggetto Attribute corrispondente
      */
     public Attribute getExplanatoryAttribute(int index) {
-        return this.explanatorySet[index];
+        return this.explanatorySet.get(index);
     }
 
     /**
@@ -191,7 +193,7 @@ public class Data {
         StringBuilder s = new StringBuilder();
         for (int i = 0; i < numberOfExamples; i++) {
             s.append(i + 1).append(": ");
-            for (int j = 0; j < explanatorySet.length; j++) {
+            for (int j = 0; j < explanatorySet.size(); j++) {
                 s.append(data[i][j]).append(", ");
             }
             s.append(data[i][classAttribute.getIndex()]).append("\n");

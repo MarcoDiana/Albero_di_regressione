@@ -2,7 +2,11 @@ package tree;
 
 import data.Attribute;
 import data.Data;
+import data.Attribute;
+import data.Data;
 import data.DiscreteAttribute;
+import java.util.TreeSet;
+import utility.Keyboard;
 
 /**
  * La classe RegressionTree modella l'entità dell'intero albero di decisione
@@ -61,9 +65,7 @@ public class RegressionTree {
      * @return Il nodo SplitNode ottimale individuato
      */
     private SplitNode determineBestSplitNode(Data trainingSet, int begin, int end) {
-        SplitNode bestSplit = null;
-        double minVariance = Double.MAX_VALUE;
-
+        TreeSet<SplitNode> ts = new TreeSet<SplitNode>();
         int numAttributes = trainingSet.getNumberOfExplanatoryAttributes();
 
         // Testa tutti gli attributi indipendenti per trovare lo split migliore
@@ -73,12 +75,12 @@ public class RegressionTree {
             // In questa esercitazione assumiamo attributi discreti
             DiscreteNode currentNode = new DiscreteNode(trainingSet, begin, end, (DiscreteAttribute) attr);
 
-            // Se la varianza dello split è inferiore alla minima trovata finora, aggiorna
-            if (currentNode.getVariance() < minVariance) {
-                minVariance = currentNode.getVariance();
-                bestSplit = currentNode;
-            }
+            // Aggiungiamo il nodo candidato al TreeSet, che lo ordinerà in base alla varianza
+            ts.add(currentNode);
         }
+
+        // Il nodo con Information Gain migliore (varianza minima) è il primo del TreeSet
+        SplitNode bestSplit = ts.first();
 
         // Una volta trovato il miglior split, bisogna riordinare definitivamente
         // la matrice dei dati rispetto all'attributo vincente
@@ -185,5 +187,39 @@ public class RegressionTree {
             }
         }
         return tree.toString();
+    }
+
+    /**
+     * Metodo interattivo per la predizione del valore di classe di un nuovo esempio.
+     * Viene mostrato all'utente lo split corrente e gli viene chiesto di indicare,
+     * tramite inserimento da tastiera, quale ramo seguire.
+     *
+     * @return L'oggetto Double contenente il valore di classe predetto
+     * @throws UnknownValueException Se l'utente digita una risposta fuori dal range dei figli disponibili
+     */
+    public Double predictClass() throws UnknownValueException {
+        // Caso base: se il nodo corrente è una foglia, restituisci semplicemente il valore
+        if (root instanceof LeafNode) {
+            return ((LeafNode) root).getPredictedClassValue();
+        }
+        // Passo ricorsivo: se è un nodo interno, fai la domanda all'utente
+        else {
+            int risp;
+
+            // Stampa a video la query del nodo (es. 0:X=A, 1:X=B)
+            System.out.println(((SplitNode) root).formulateQuery());
+
+            // Legge il numero digitato dall'utente
+            risp = Keyboard.readInt();
+
+            // Controlla che il numero inserito sia un indice di ramo valido
+            if (risp == -1 || risp >= root.getNumberOfChildren()) {
+                throw new UnknownValueException("The answer should be an integer between 0 and " + (root.getNumberOfChildren() - 1) + "!");
+            }
+            else {
+                // Se la risposta è valida, scendi ricorsivamente nel sotto-albero scelto
+                return childTree[risp].predictClass();
+            }
+        }
     }
 }

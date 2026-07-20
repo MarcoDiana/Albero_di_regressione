@@ -1,13 +1,15 @@
 package tree;
 
 import data.Attribute;
+import data.Attribute;
 import data.Data;
+import java.util.List;
 
 /**
  * La classe astratta SplitNode estende Node e modella l'astrazione
  * dell'entità nodo di split (sia esso continuo o discreto).
  */
-public abstract class SplitNode extends Node {
+public abstract class SplitNode extends Node implements Comparable<SplitNode> {
 
     /**
      * Inner class che aggrega tutte le informazioni riguardanti un nodo di split.
@@ -115,7 +117,7 @@ public abstract class SplitNode extends Node {
     private Attribute attribute;
 
     /** Array per memorizzare gli split candidati generati dai test sui valori dell'attributo. */
-    protected SplitInfo[] mapSplit;
+    protected List<SplitInfo> mapSplit;
 
     /** Attributo che contiene il valore della somma delle varianze a seguito del partizionamento indotto. */
     private double splitVariance;
@@ -193,7 +195,7 @@ public abstract class SplitNode extends Node {
      */
     @Override
     public int getNumberOfChildren() {
-        return this.mapSplit.length;
+        return this.mapSplit.size();
     }
 
     /**
@@ -203,7 +205,7 @@ public abstract class SplitNode extends Node {
      * @return Oggetto SplitInfo associato al figlio
      */
     public SplitInfo getSplitInfo(int child) {
-        return this.mapSplit[child];
+        return this.mapSplit.get(child);
     }
 
     /**
@@ -214,11 +216,11 @@ public abstract class SplitNode extends Node {
      */
     public String formulateQuery() {
         StringBuilder query = new StringBuilder();
-        for (int i = 0; i < mapSplit.length; i++) {
+        for (int i = 0; i < mapSplit.size(); i++) {
             query.append(i).append(":")
                     .append(attribute.getName())
-                    .append(mapSplit[i].getComparator())
-                    .append(mapSplit[i].getSplitValue())
+                    .append(mapSplit.get(i).getComparator())
+                    .append(mapSplit.get(i).getSplitValue())
                     .append("\n");
         }
         return query.toString();
@@ -237,9 +239,21 @@ public abstract class SplitNode extends Node {
                 .append(" Nodo: ").append(super.toString())
                 .append("\nSplit Variance: ").append(this.splitVariance).append("\n");
 
-        for (int i = 0; i < mapSplit.length; i++) {
-            s.append("\t").append(mapSplit[i].toString()).append("\n");
+        for (int i = 0; i < mapSplit.size(); i++) {
+            s.append("\t").append(mapSplit.get(i).toString()).append("\n");
         }
         return s.toString();
+    }
+
+    /**
+     * Confronta la splitVariance di questo nodo con quella di un altro nodo.
+     * Serve per ordinare automaticamente gli split nel TreeSet.
+     *
+     * @param o Il nodo di split con cui confrontarsi
+     * @return 0 se uguali, -1 se questo ha varianza minore, 1 se maggiore
+     */
+    @Override
+    public int compareTo(SplitNode o) {
+        return Double.compare(this.splitVariance, o.splitVariance);
     }
 }
