@@ -1,13 +1,18 @@
 package data;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
+
 /**
  * La classe DiscreteAttribute estende la classe Attribute e rappresenta
  * un attributo discreto (nominale), caratterizzato da un insieme finito di valori.
  */
-public class DiscreteAttribute extends Attribute {
+public class DiscreteAttribute extends Attribute implements Iterable<String> {
 
-    // Array di oggetti String, uno per ciascun valore discreto che l'attributo può assumere
-    private String[] values;
+    // Set di oggetti String per mantenere i valori ordinati e senza duplicati
+    private Set<String> values;
 
     /**
      * Costruttore di classe. Inizializza il nome, l'indice e l'insieme dei valori discreti.
@@ -19,7 +24,7 @@ public class DiscreteAttribute extends Attribute {
     public DiscreteAttribute(String name, int index, String[] values) {
         // Invoca il costruttore della super-classe Attribute
         super(name, index);
-        this.values = values;
+        this.values = new TreeSet<>(Arrays.asList(values));
     }
 
     /**
@@ -28,16 +33,17 @@ public class DiscreteAttribute extends Attribute {
      * @return La cardinalità dell'array values (di tipo int)
      */
     public int getNumberOfDistinctValues() {
-        return this.values.length;
+        return this.values.size();
     }
 
     /**
-     * Restituisce lo specifico valore discreto presente all'indice specificato.
+     * Restituisce un iteratore per scorrere i valori del Set.
+     * Necessario per l'implementazione dell'interfaccia Iterable<String>.
      *
-     * @param i Indice dell'elemento da restituire rispetto all'array values
-     * @return La stringa corrispondente al valore discreto in posizione i
+     * @return Iteratore di stringhe
      */
-    public String getValue(int i) {
-        return this.values[i];
+    @Override
+    public Iterator<String> iterator() {
+        return this.values.iterator();
     }
 }
