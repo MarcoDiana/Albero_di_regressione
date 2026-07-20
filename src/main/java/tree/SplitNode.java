@@ -12,10 +12,10 @@ import java.util.List;
 public abstract class SplitNode extends Node implements Comparable<SplitNode> {
 
     /**
-     * Inner class che aggrega tutte le informazioni riguardanti un nodo di split.
-     * Memorizza le condizioni del test e i range coperti dai vari figli.
+     * Inner class protetta che modella le informazioni relative a un singolo
+     * ramo (split) originato dal nodo corrente.
      */
-    protected class SplitInfo {
+    protected class SplitInfo implements java.io.Serializable {
 
         /** Valore dell'attributo indipendente che definisce la condizione di split. */
         Object splitValue;
