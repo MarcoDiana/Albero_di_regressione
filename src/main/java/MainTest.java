@@ -1,6 +1,5 @@
-import java.io.FileNotFoundException;
-
 import data.Data;
+import data.TrainingDataException;
 import tree.RegressionTree;
 
 /**
@@ -17,9 +16,9 @@ class MainTest {
 	 * Punto di ingresso del programma di test.
 	 *
 	 * @param args argomenti della riga di comando (non utilizzati)
-	 * @throws FileNotFoundException se il file prova.dat non è trovato nella directory corrente
+	 * @throws TrainingDataException se il file prova.dat non è trovato nella directory corrente
 	 */
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws TrainingDataException {
 		// Carica il training set da file
 		Data trainingSet = new Data("prova.dat");
 
