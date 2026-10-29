@@ -1,5 +1,7 @@
 package tree;
 
+import java.io.Serializable;
+
 import data.Attribute;
 import data.ContinuousAttribute;
 import data.Data;
@@ -15,7 +17,10 @@ import data.DiscreteAttribute;
  *   SSE(S) = Σ(yi - ȳ)² = Σyi² - (Σyi)²/|S|
  * Un nodo con SSE=0 contiene esempi con identico valore di classe → foglia ideale.
  */
-abstract class Node {
+abstract class Node implements Serializable {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Contatore statico condiviso tra tutte le istanze.

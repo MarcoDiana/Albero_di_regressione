@@ -1,12 +1,20 @@
 package data;
 
+import java.io.Serializable;
+
 /**
  * Classe astratta che modella un generico attributo del training set.
  * Funge da superclasse comune per DiscreteAttribute e ContinuousAttribute,
  * permettendo di trattare attributi di tipo diverso in modo uniforme
  * (es. nella lista explanatorySet di Data).
+ *
+ * Implementa Serializable perché gli attributi sono referenziati dai nodi di split
+ * e devono quindi essere salvati insieme all'albero di regressione.
  */
-public abstract class Attribute {
+public abstract class Attribute implements Serializable {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/** Nome simbolico dell'attributo (es. "motor", "class"). */
 	private String name;

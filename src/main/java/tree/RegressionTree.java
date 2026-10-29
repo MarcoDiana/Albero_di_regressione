@@ -1,5 +1,6 @@
 package tree;
 
+import java.io.Serializable;
 import java.util.TreeSet;
 
 import data.Attribute;
@@ -24,7 +25,10 @@ import utility.Keyboard;
  * Criterio di split: minimizzazione della varianza totale (somma degli SSE dei figli).
  * Soglia di stop: il sottoinsieme ha al più il 10% degli esempi del training set.
  */
-public class RegressionTree {
+public class RegressionTree implements Serializable {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Nodo radice del sotto-albero corrente.

@@ -1,5 +1,6 @@
 package tree;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,10 @@ abstract class SplitNode extends Node implements Comparable<SplitNode> {
 	 * partizione (figlio) prodotta dallo split.
 	 * Ogni SplitInfo corrisponde a un ramo dell'albero che parte da questo nodo.
 	 */
-	class SplitInfo {
+	class SplitInfo implements Serializable {
+
+		/** Identificativo di versione per la serializzazione. */
+		private static final long serialVersionUID = 1L;
 
 		/** Valore dell'attributo che caratterizza questa partizione. */
 		private Object splitValue;
