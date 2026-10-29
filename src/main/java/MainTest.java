@@ -1,35 +1,55 @@
 import data.Data;
 import data.TrainingDataException;
 import tree.RegressionTree;
+import tree.UnknownValueException;
+import utility.Keyboard;
 
 /**
  * Classe di test per l'algoritmo di apprendimento dell'albero di regressione.
  *
- * Carica il dataset prova.dat (2 attributi discreti X e Y, 15 esempi),
- * apprende un RegressionTree e ne stampa:
- *   1. Le regole IF-THEN estratte (printRules)
- *   2. La struttura completa dell'albero con le informazioni dei nodi (printTree)
+ * Acquisisce il nome del file del training set, apprende un RegressionTree,
+ * ne stampa regole e struttura e consente all'utente di predire il valore
+ * di classe di nuovi esempi inseriti da tastiera.
  */
 class MainTest {
 
 	/**
-	 * Punto di ingresso del programma di test.
+	 * Punto di ingresso del programma.
+	 * Gli errori di acquisizione del training set e le risposte non valide
+	 * durante la predizione vengono segnalati all'utente senza interrompere l'esecuzione.
 	 *
 	 * @param args argomenti della riga di comando (non utilizzati)
-	 * @throws TrainingDataException se il file prova.dat non è trovato nella directory corrente
 	 */
-	public static void main(String[] args) throws TrainingDataException {
-		// Carica il training set da file
-		Data trainingSet = new Data("prova.dat");
+	public static void main(String[] args) {
+		System.out.println("Training set:");
+		String fileName = Keyboard.readString();
 
-		// Apprende l'albero di regressione sul training set
-		// La soglia di stop è fissata internamente al 10% degli esempi
+		System.out.println("Starting data acquisition phase!");
+		Data trainingSet;
+		try {
+			trainingSet = new Data(fileName);
+		} catch (TrainingDataException e) {
+			System.out.println(e);
+			return;
+		}
+
+		System.out.println("Starting learning phase!");
 		RegressionTree tree = new RegressionTree(trainingSet);
-
-		// Stampa le regole IF-THEN estratte dall'albero
 		tree.printRules();
-
-		// Stampa la struttura completa dell'albero (nodi, range, varianze)
 		tree.printTree();
+
+		char risp = 'y';
+		do {
+			System.out.println("Starting prediction phase!");
+			try {
+				System.out.println(tree.predictClass());
+			} catch (UnknownValueException e) {
+				System.out.println(e);
+			}
+			do {
+				System.out.println("Would you repeat ? (y/n)");
+				risp = Keyboard.readChar();
+			} while (risp != 'y' && risp != 'n');
+		} while (risp == 'y');
 	}
 }

@@ -4,6 +4,7 @@ import data.Attribute;
 import data.ContinuousAttribute;
 import data.Data;
 import data.DiscreteAttribute;
+import utility.Keyboard;
 
 /**
  * Albero di regressione appreso induttivamente da un training set.
@@ -237,5 +238,32 @@ public class RegressionTree {
 				tree += childTree[i]; // chiama childTree[i].toString()
 		}
 		return tree;
+	}
+
+	// -------------------------------------------------------------------------
+	// Predizione di nuovi esempi
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Predice il valore di classe di un nuovo esempio acquisito da tastiera.
+	 *
+	 * Se la radice corrente è una foglia restituisce il valore predetto; altrimenti
+	 * visualizza le condizioni dello split (formulateQuery), acquisisce la risposta
+	 * dell'utente e prosegue ricorsivamente sul sotto-albero selezionato.
+	 *
+	 * @return valore di classe predetto per l'esempio
+	 * @throws UnknownValueException se la risposta non individua un ramo valido del nodo di split
+	 */
+	public Double predictClass() throws UnknownValueException {
+		if (root instanceof LeafNode) {
+			return ((LeafNode) root).getPredictedClassValue();
+		} else {
+			System.out.println(((SplitNode) root).formulateQuery());
+			int risp = Keyboard.readInt();
+			if (risp < 0 || risp >= root.getNumberOfChildren())
+				throw new UnknownValueException(
+						"The answer should be an integer between 0 and " + (root.getNumberOfChildren() - 1) + "!");
+			return childTree[risp].predictClass();
+		}
 	}
 }
