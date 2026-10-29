@@ -129,6 +129,9 @@ public class RegressionTree {
 	 * che li mantiene ordinati per varianza (SplitNode è Comparable): il primo
 	 * elemento è quindi il migliore.
 	 *
+	 * Il tipo di nodo (DiscreteNode o ContinuousNode) è scelto a runtime in base al
+	 * tipo dell'attributo (RTTI).
+	 *
 	 * La creazione di ogni nodo ordina il training set (in-place) per il proprio
 	 * attributo, perciò al termine il training set risulta ordinato per l'ultimo
 	 * attributo provato. Prima di restituire il nodo vincente si riordina il range
@@ -143,8 +146,14 @@ public class RegressionTree {
 	private SplitNode determineBestSplitNode(Data trainingSet, int begin, int end) {
 		TreeSet<SplitNode> ts = new TreeSet<SplitNode>();
 		for (int i = 0; i < trainingSet.getNumberOfExplanatoryAttributes(); i++) {
-			DiscreteAttribute attribute = (DiscreteAttribute) trainingSet.getExplanatoryAttribute(i);
-			ts.add(new DiscreteNode(trainingSet, begin, end, attribute));
+			Attribute a = trainingSet.getExplanatoryAttribute(i);
+			SplitNode currentNode;
+			// RTTI: il tipo dell'attributo determina il tipo di nodo di split da istanziare
+			if (a instanceof DiscreteAttribute)
+				currentNode = new DiscreteNode(trainingSet, begin, end, (DiscreteAttribute) a);
+			else
+				currentNode = new ContinuousNode(trainingSet, begin, end, (ContinuousAttribute) a);
+			ts.add(currentNode);
 		}
 		SplitNode bestNode = ts.first();
 		trainingSet.sort(bestNode.getAttribute(), begin, end);
