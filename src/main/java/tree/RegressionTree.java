@@ -1,5 +1,11 @@
 package tree;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.TreeSet;
 
@@ -271,6 +277,39 @@ public class RegressionTree implements Serializable {
 				throw new UnknownValueException(
 						"The answer should be an integer between 0 and " + (root.getNumberOfChildren() - 1) + "!");
 			return childTree[risp].predictClass();
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Persistenza
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Serializza l'albero (con i nodi e gli attributi che lo compongono) in un file.
+	 *
+	 * @param nomeFile nome del file in cui salvare l'albero
+	 * @throws FileNotFoundException se il file non può essere creato o aperto in scrittura
+	 * @throws IOException           se si verifica un errore durante la scrittura
+	 */
+	public void salva(String nomeFile) throws FileNotFoundException, IOException {
+		try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(nomeFile))) {
+			out.writeObject(this);
+		}
+	}
+
+	/**
+	 * Carica da file un albero di regressione precedentemente salvato con salva().
+	 *
+	 * @param nomeFile nome del file in cui è salvato l'albero
+	 * @return albero di regressione contenuto nel file
+	 * @throws FileNotFoundException  se il file non esiste o non è leggibile
+	 * @throws IOException            se si verifica un errore durante la lettura
+	 * @throws ClassNotFoundException se il file contiene un oggetto di una classe sconosciuta
+	 */
+	public static RegressionTree carica(String nomeFile)
+			throws FileNotFoundException, IOException, ClassNotFoundException {
+		try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(nomeFile))) {
+			return (RegressionTree) in.readObject();
 		}
 	}
 }
