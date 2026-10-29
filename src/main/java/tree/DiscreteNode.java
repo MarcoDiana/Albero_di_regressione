@@ -1,32 +1,25 @@
 package tree;
 
 import data.Attribute;
-import data.ContinuousAttribute;
 import data.Data;
 import data.DiscreteAttribute;
 
 /**
  * Nodo di split discreto dell'albero di regressione.
- * Implementa uno split su un attributo discreto: il dataset viene
+ * Implementa uno split su un attributo discreto: il training set viene
  * partizionato in tanti sottoinsiemi quanti sono i valori distinti
  * dell'attributo presenti nel range corrente di esempi.
  *
  * Esempio con attributo "motor" (valori A,B,C,D,E):
- *   Se nel range corrente compaiono solo A e B, lo split produce 2 figli.
- *
- * Il criterio di scelta del miglior split è la riduzione della varianza:
- * si sceglie l'attributo che produce la somma di SSE più bassa tra i figli.
+ *   se nel range corrente compaiono solo A e B, lo split produce 2 figli.
  */
 class DiscreteNode extends SplitNode {
 
 	/**
-	 * Costruttore: delega a SplitNode, che a sua volta:
-	 *   1. chiama Node() per calcolare SSE e assegnare l'ID
-	 *   2. ordina i dati per attributo (trainingSet.sort)
-	 *   3. invoca setSplitInfo() per popolare mapSplit[]
-	 *   4. calcola splitVariance come somma degli SSE dei figli
+	 * Costruttore: delega a SplitNode, che ordina i dati per l'attributo,
+	 * invoca setSplitInfo() e calcola la varianza dello split.
 	 *
-	 * @param trainingSet       dataset contenente gli esempi
+	 * @param trainingSet       training set contenente gli esempi
 	 * @param beginExampleIndex primo indice del sottoinsieme (incluso)
 	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
 	 * @param attribute         attributo discreto su cui effettuare lo split
@@ -36,88 +29,69 @@ class DiscreteNode extends SplitNode {
 	}
 
 	/**
-	 * Popola l'array mapSplit[] con le informazioni sulle partizioni dello split.
+	 * Popola mapSplit con le informazioni sulle partizioni dello split.
 	 *
 	 * Presupposto: i dati nel range [beginExampleIndex, endExampleIndex] sono già
-	 * ordinati per attributo (garantito da SplitNode prima di chiamare questo metodo).
-	 * Quindi esempi con lo stesso valore dell'attributo sono contigui: basta scorrere
-	 * il range una volta per trovare i confini di ogni partizione.
+	 * ordinati per l'attributo (garantito da SplitNode). Gli esempi con lo stesso
+	 * valore sono quindi contigui: basta scorrere il range una volta sola per
+	 * individuare i confini di ogni partizione.
 	 *
-	 * Per ogni valore distinto trovato si crea un SplitInfo con:
+	 * Per ogni valore distinto trovato si crea uno SplitInfo con:
 	 *   - splitValue: il valore dell'attributo
 	 *   - beginIndex/endIndex: estremi del blocco di esempi con quel valore
 	 *   - numberChild: indice progressivo del figlio (0, 1, 2, ...)
 	 *
-	 * @param trainingSet       dataset (già ordinato per attributo nel range)
+	 * @param trainingSet       training set (già ordinato per l'attributo nel range)
 	 * @param beginExampleIndex primo indice del sottoinsieme (incluso)
 	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
-	 * @param attribute         attributo su cui si sta splittando
+	 * @param attribute         attributo su cui si sta effettuando lo split
 	 */
-	void setSplitInfo(Data trainingSet, int beginExampleIndex, int endExampleIndex, Attribute attribute) {
-
-		// Prima passata: conta i valori distinti presenti nel range
-		// (potrebbero essere meno dei valori teorici dell'attributo)
-		int distinctCount = 1;
-		String currentValue = (String) trainingSet.getExplanatoryValue(beginExampleIndex, attribute.getIndex());
-		for (int i = beginExampleIndex + 1; i <= endExampleIndex; i++) {
-			String val = (String) trainingSet.getExplanatoryValue(i, attribute.getIndex());
-			if (!val.equals(currentValue)) {
-				distinctCount++;
-				currentValue = val;
-			}
-		}
-
-		// Alloca l'array con il numero esatto di partizioni trovate
-		mapSplit = new SplitInfo[distinctCount];
-
-		// Seconda passata: crea un SplitInfo per ogni blocco contiguo di valore uguale
-		int splitIdx = 0;
+	@Override
+	protected void setSplitInfo(Data trainingSet, int beginExampleIndex, int endExampleIndex, Attribute attribute) {
 		int rangeStart = beginExampleIndex;
-		currentValue = (String) trainingSet.getExplanatoryValue(beginExampleIndex, attribute.getIndex());
+		String currentValue = (String) trainingSet.getExplanatoryValue(beginExampleIndex, attribute.getIndex());
 
 		for (int i = beginExampleIndex + 1; i <= endExampleIndex; i++) {
 			String val = (String) trainingSet.getExplanatoryValue(i, attribute.getIndex());
 			if (!val.equals(currentValue)) {
-				// Trovato cambio di valore: chiude il blocco precedente
-				mapSplit[splitIdx] = new SplitInfo(currentValue, rangeStart, i - 1, splitIdx);
-				splitIdx++;
+				// Cambio di valore: chiude il blocco precedente e ne apre uno nuovo
+				mapSplit.add(new SplitInfo(currentValue, rangeStart, i - 1, mapSplit.size()));
 				rangeStart = i;
 				currentValue = val;
 			}
 		}
-		// Aggiunge l'ultimo blocco (non chiuso dal ciclo)
-		mapSplit[splitIdx] = new SplitInfo(currentValue, rangeStart, endExampleIndex, splitIdx);
+		// Ultimo blocco, non chiuso dal ciclo
+		mapSplit.add(new SplitInfo(currentValue, rangeStart, endExampleIndex, mapSplit.size()));
 	}
 
 	/**
-	 * Testa su quale ramo inviare un esempio dato il valore del suo attributo.
-	 * Confronta il valore ricevuto con il splitValue di ogni SplitInfo e
-	 * restituisce l'indice del figlio corrispondente.
+	 * Verifica su quale ramo instradare un esempio dato il valore del suo attributo.
+	 * Confronta il valore con lo splitValue di ogni SplitInfo e restituisce
+	 * l'indice del figlio corrispondente.
 	 *
 	 * @param value valore dell'attributo discreto dell'esempio da classificare
 	 * @return indice del figlio (0-based) che corrisponde al valore, o -1 se non trovato
 	 */
+	@Override
 	int testCondition(Object value) {
-		for (int i = 0; i < mapSplit.length; i++) {
-			if (value.equals(mapSplit[i].getSplitValue())) {
-				// numberChild è uguale a i nel nostro setSplitInfo (assegnato sequenzialmente)
-				return mapSplit[i].numberChild;
-			}
+		for (SplitInfo info : mapSplit) {
+			if (value.equals(info.getSplitValue()))
+				return info.getNumberChild();
 		}
-		// Valore non presente nel training set: non dovrebbe accadere in fase di apprendimento
+		// Valore assente dal training set: nessun ramo applicabile
 		return -1;
 	}
 
 	/**
 	 * Rappresentazione testuale del nodo di split discreto.
 	 * Aggiunge il prefisso "DISCRETE" alla stringa prodotta da SplitNode.toString()
-	 * per distinguere visivamente questo tipo di nodo da eventuali altri split (es. continui).
+	 * per distinguere questo tipo di nodo dagli split continui.
 	 *
-	 * @return stringa nel formato "DISCRETE SPLIT : attribute=X [...] Split Variance: val"
-	 *         seguita da una riga per ogni partizione (child)
+	 * @return stringa nel formato "DISCRETE SPLIT : attribute=X [...] Split Variance: val",
+	 *         seguita da una riga per ogni partizione
 	 */
+	@Override
 	public String toString() {
-		// Usa il formato di SplitNode ma specifica il tipo "DISCRETE"
 		return super.toString().replaceFirst("SPLIT :", "DISCRETE SPLIT :");
 	}
 }

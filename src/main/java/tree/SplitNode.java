@@ -1,9 +1,10 @@
 package tree;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import data.Attribute;
-import data.ContinuousAttribute;
 import data.Data;
-import data.DiscreteAttribute;
 
 /**
  * Classe astratta che modella un nodo interno (di split) dell'albero di regressione.
@@ -13,11 +14,14 @@ import data.DiscreteAttribute;
  * Contiene la classe interna SplitInfo che descrive ogni singola partizione
  * (figlio) prodotta dallo split: valore discriminante, range di esempi, indice del figlio.
  *
+ * Gli split sono confrontabili rispetto alla varianza: lo split con varianza
+ * minore è il migliore (Comparable).
+ *
  * Le sottoclassi concrete (es. DiscreteNode) implementano:
  *   - setSplitInfo(): come ricavare le partizioni per uno specifico tipo di attributo
  *   - testCondition(): su quale ramo instradare un nuovo esempio
  */
-abstract class SplitNode extends Node {
+abstract class SplitNode extends Node implements Comparable<SplitNode> {
 
 	/**
 	 * Classe interna che raccoglie le informazioni descrittive di una singola
@@ -25,27 +29,28 @@ abstract class SplitNode extends Node {
 	 * Ogni SplitInfo corrisponde a un ramo dell'albero che parte da questo nodo.
 	 */
 	class SplitInfo {
+
 		/** Valore dell'attributo che caratterizza questa partizione. */
-		Object splitValue;
+		private Object splitValue;
 
 		/** Primo indice degli esempi appartenenti a questa partizione (incluso). */
-		int beginIndex;
+		private int beginIndex;
 
 		/** Ultimo indice degli esempi appartenenti a questa partizione (incluso). */
-		int endIndex;
+		private int endIndex;
 
 		/** Numero (indice) del figlio: 0 per il primo ramo, 1 per il secondo, ecc. */
-		int numberChild;
+		private int numberChild;
 
 		/**
 		 * Operatore di confronto usato nella formulazione della regola.
 		 * Per attributi discreti è sempre "=" (valore uguale).
-		 * Per attributi continui potrebbe essere "<=" o ">".
+		 * Per attributi continui è "<=" oppure ">".
 		 */
-		String comparator = "=";
+		private String comparator = "=";
 
 		/**
-		 * Costruttore base: usato per split discreti dove il comparatore è sempre "=".
+		 * Costruttore base: usato per split discreti, dove il comparatore è sempre "=".
 		 *
 		 * @param splitValue  valore che identifica questa partizione
 		 * @param beginIndex  primo indice del range (incluso)
@@ -60,7 +65,7 @@ abstract class SplitNode extends Node {
 		}
 
 		/**
-		 * Costruttore esteso: permette di specificare un comparatore personalizzato.
+		 * Costruttore esteso: permette di specificare il comparatore.
 		 * Utile per attributi continui (es. "<=", ">").
 		 *
 		 * @param splitValue  valore che identifica questa partizione
@@ -70,29 +75,51 @@ abstract class SplitNode extends Node {
 		 * @param comparator  operatore di confronto ("=", "<=", ">", ...)
 		 */
 		SplitInfo(Object splitValue, int beginIndex, int endIndex, int numberChild, String comparator) {
-			this.splitValue = splitValue;
-			this.beginIndex = beginIndex;
-			this.endIndex = endIndex;
-			this.numberChild = numberChild;
+			this(splitValue, beginIndex, endIndex, numberChild);
 			this.comparator = comparator;
 		}
 
-		/** Restituisce il primo indice del range di esempi di questa partizione. */
-		int getBeginindex() {
+		/**
+		 * Restituisce il primo indice del range di esempi di questa partizione.
+		 *
+		 * @return primo indice (incluso)
+		 */
+		int getBeginIndex() {
 			return beginIndex;
 		}
 
-		/** Restituisce l'ultimo indice del range di esempi di questa partizione. */
+		/**
+		 * Restituisce l'ultimo indice del range di esempi di questa partizione.
+		 *
+		 * @return ultimo indice (incluso)
+		 */
 		int getEndIndex() {
 			return endIndex;
 		}
 
-		/** Restituisce il valore dell'attributo che discrimina questa partizione. */
+		/**
+		 * Restituisce il valore dell'attributo che discrimina questa partizione.
+		 *
+		 * @return valore dello split
+		 */
 		Object getSplitValue() {
 			return splitValue;
 		}
 
-		/** Restituisce l'operatore di confronto ("=" per discreti). */
+		/**
+		 * Restituisce l'indice del figlio associato a questa partizione.
+		 *
+		 * @return indice del figlio (0-based)
+		 */
+		int getNumberChild() {
+			return numberChild;
+		}
+
+		/**
+		 * Restituisce l'operatore di confronto del test.
+		 *
+		 * @return "=" per attributi discreti, "<=" o ">" per attributi continui
+		 */
 		String getComparator() {
 			return comparator;
 		}
@@ -100,72 +127,64 @@ abstract class SplitNode extends Node {
 		/**
 		 * Rappresentazione testuale della partizione: indice del figlio,
 		 * valore discriminante e range di esempi.
+		 *
+		 * @return stringa nel formato "child i split value=v[Examples:begin-end]"
 		 */
+		@Override
 		public String toString() {
 			return "child " + numberChild + " split value" + comparator + splitValue
 					+ "[Examples:" + beginIndex + "-" + endIndex + "]";
 		}
 	}
 
-	// -------------------------------------------------------------------------
-	// Campi di SplitNode
-	// -------------------------------------------------------------------------
-
-	/** Attributo su cui viene effettuato lo split. */
-	Attribute attribute;
+	/** Attributo indipendente su cui viene effettuato lo split. */
+	private Attribute attribute;
 
 	/**
-	 * Array delle partizioni prodotte dallo split.
-	 * mapSplit[i] descrive il range di esempi e il valore discriminante
-	 * per il figlio i-esimo. Popolato da setSplitInfo() nelle sottoclassi.
+	 * Partizioni prodotte dallo split: mapSplit.get(i) descrive il range di esempi
+	 * e il valore discriminante del figlio i-esimo.
+	 * Popolata da setSplitInfo() nelle sottoclassi.
 	 */
-	SplitInfo[] mapSplit;
+	protected List<SplitInfo> mapSplit = new ArrayList<SplitInfo>();
 
 	/**
 	 * Varianza totale dello split: somma degli SSE dei nodi figli.
-	 * Più è basso questo valore, più lo split è "buono" (omogeneizza le partizioni).
-	 * Usato da determineBestSplitNode() in RegressionTree per confrontare split alternativi.
+	 * Più è basso questo valore, più lo split omogeneizza le partizioni.
+	 * Usata da RegressionTree per confrontare split alternativi.
 	 */
-	double splitVariance;
-
-	// -------------------------------------------------------------------------
-	// Metodi astratti da implementare nelle sottoclassi
-	// -------------------------------------------------------------------------
+	private double splitVariance;
 
 	/**
-	 * Popola mapSplit[] con le informazioni sulle partizioni dello split.
-	 * Implementato differentemente per attributi discreti e continui.
+	 * Popola mapSplit con le informazioni sulle partizioni dello split.
+	 * Implementato diversamente per attributi discreti e continui.
 	 *
-	 * @param trainingSet       dataset (già ordinato per attributo nel range)
+	 * @param trainingSet       training set (già ordinato per l'attributo nel range)
 	 * @param beginExampelIndex primo indice del sottoinsieme (incluso)
 	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
-	 * @param attribute         attributo su cui si sta splittando
+	 * @param attribute         attributo su cui si sta effettuando lo split
 	 */
-	abstract void setSplitInfo(Data trainingSet, int beginExampelIndex, int endExampleIndex, Attribute attribute);
+	protected abstract void setSplitInfo(Data trainingSet, int beginExampelIndex, int endExampleIndex,
+			Attribute attribute);
 
 	/**
 	 * Determina su quale ramo instradare un esempio dato il valore del suo attributo.
 	 *
 	 * @param value valore dell'attributo per l'esempio da classificare
-	 * @return indice del figlio corrispondente (0-based), o -1 se non trovato
+	 * @return indice del figlio corrispondente (0-based), o -1 se nessun ramo supera il test
 	 */
 	abstract int testCondition(Object value);
 
-	// -------------------------------------------------------------------------
-	// Costruttore
-	// -------------------------------------------------------------------------
-
 	/**
 	 * Costruttore: inizializza il nodo di split.
-	 *   1. Chiama Node() per calcolare SSE e assegnare l'ID al nodo
-	 *   2. Ordina il sottoinsieme di esempi per l'attributo dato (necessario per setSplitInfo)
-	 *   3. Invoca setSplitInfo() (implementato nelle sottoclassi) per popolare mapSplit[]
-	 *   4. Calcola splitVariance come somma degli SSE delle foglie dei figli
+	 *   1. Invoca il costruttore di Node (calcola SSE e assegna l'ID)
+	 *   2. Ordina il sottoinsieme di esempi per l'attributo (necessario a setSplitInfo)
+	 *   3. Invoca setSplitInfo() per popolare mapSplit
+	 *   4. Calcola splitVariance come somma degli SSE dei figli
 	 *
-	 * Nota: per calcolare la varianza di ogni figlio si creano istanze temporanee
-	 * di LeafNode (che computano l'SSE nel loro costruttore).
+	 * Per calcolare la varianza di ogni figlio si usano istanze temporanee
+	 * di LeafNode, che computano l'SSE nel proprio costruttore.
 	 *
-	 * @param trainingSet       dataset contenente gli esempi
+	 * @param trainingSet       training set contenente gli esempi
 	 * @param beginExampleIndex primo indice del sottoinsieme (incluso)
 	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
 	 * @param attribute         attributo su cui effettuare lo split
@@ -174,79 +193,96 @@ abstract class SplitNode extends Node {
 		super(trainingSet, beginExampleIndex, endExampleIndex);
 		this.attribute = attribute;
 
-		// Ordina i dati per l'attributo: garantisce che esempi con stesso valore siano contigui
+		// L'ordinamento rende contigui gli esempi con lo stesso valore dell'attributo
 		trainingSet.sort(attribute, beginExampleIndex, endExampleIndex);
-
-		// Popola mapSplit[] con le partizioni trovate dopo l'ordinamento
 		setSplitInfo(trainingSet, beginExampleIndex, endExampleIndex, attribute);
 
-		// Calcola la varianza totale dello split: somma degli SSE di ogni figlio
-		// Usa LeafNode temporanei perché essi calcolano l'SSE nel costruttore
+		// La varianza dello split è la somma degli SSE delle partizioni
 		splitVariance = 0;
-		for (int i = 0; i < mapSplit.length; i++) {
-			double localVariance = new LeafNode(trainingSet, mapSplit[i].getBeginindex(),
-					mapSplit[i].getEndIndex()).getVariance();
-			splitVariance += localVariance;
-		}
+		for (SplitInfo info : mapSplit)
+			splitVariance += new LeafNode(trainingSet, info.getBeginIndex(), info.getEndIndex()).getVariance();
 	}
 
-	// -------------------------------------------------------------------------
-	// Metodi concreti
-	// -------------------------------------------------------------------------
-
-	/** Restituisce l'attributo su cui è stato effettuato lo split. */
+	/**
+	 * Restituisce l'attributo su cui è stato effettuato lo split.
+	 *
+	 * @return attributo di split
+	 */
 	Attribute getAttribute() {
 		return attribute;
 	}
 
 	/**
-	 * Restituisce la varianza totale dello split (somma SSE dei figli).
-	 * Override di Node.getVariance(): in un nodo di split la varianza
+	 * Restituisce la varianza totale dello split (somma degli SSE dei figli).
+	 * Ridefinisce Node.getVariance(): in un nodo di split la varianza
 	 * rilevante è quella aggregata dei figli, non quella del nodo corrente.
+	 *
+	 * @return varianza dello split
 	 */
+	@Override
 	double getVariance() {
 		return splitVariance;
 	}
 
-	/** Restituisce il numero di partizioni (figli) prodotte dallo split. */
+	/**
+	 * Restituisce il numero di partizioni (figli) prodotte dallo split.
+	 *
+	 * @return numero di rami originati dal nodo
+	 */
+	@Override
 	int getNumberOfChildren() {
-		return mapSplit.length;
+		return mapSplit.size();
 	}
 
 	/**
 	 * Restituisce le informazioni sulla partizione del figlio i-esimo.
 	 *
 	 * @param child indice del figlio (0-based)
-	 * @return oggetto SplitInfo con range e valore discriminante del figlio
+	 * @return SplitInfo con range e valore discriminante del figlio
 	 */
 	SplitInfo getSplitInfo(int child) {
-		return mapSplit[child];
+		return mapSplit.get(child);
 	}
 
 	/**
-	 * Restituisce una stringa che rappresenta la "domanda" dello split,
-	 * utile per mostrare le condizioni all'utente o in un'interfaccia grafica.
-	 * Formato per ogni partizione: "i: attributo=valore\n"
+	 * Formula la "domanda" dello split concatenando, per ogni ramo, indice,
+	 * attributo, operatore e valore. Necessario per la predizione di nuovi esempi.
+	 * Formato per ogni partizione: "i:attributo=valore\n".
 	 *
 	 * @return stringa con tutte le opzioni dello split
 	 */
 	String formulateQuery() {
-		String query = "";
-		for (int i = 0; i < mapSplit.length; i++)
-			query += (i + ":" + attribute + mapSplit[i].getComparator() + mapSplit[i].getSplitValue()) + "\n";
-		return query;
+		StringBuilder query = new StringBuilder();
+		for (int i = 0; i < mapSplit.size(); i++)
+			query.append(i).append(":").append(attribute)
+					.append(mapSplit.get(i).getComparator())
+					.append(mapSplit.get(i).getSplitValue()).append("\n");
+		return query.toString();
 	}
 
 	/**
-	 * Rappresentazione testuale del nodo di split: mostra attributo, info del nodo (da Node),
-	 * varianza dello split e l'elenco di tutte le partizioni.
+	 * Confronta due nodi di split rispetto alla varianza dello split.
+	 *
+	 * @param o nodo di split da confrontare con quello corrente
+	 * @return -1 se la varianza del nodo corrente è minore, 1 se è maggiore, 0 se sono uguali
 	 */
+	@Override
+	public int compareTo(SplitNode o) {
+		return Double.compare(splitVariance, o.splitVariance);
+	}
+
+	/**
+	 * Rappresentazione testuale del nodo di split: attributo, informazioni del nodo
+	 * (da Node), varianza dello split ed elenco di tutte le partizioni.
+	 *
+	 * @return descrizione del nodo e dei suoi rami
+	 */
+	@Override
 	public String toString() {
-		String v = "SPLIT : attribute=" + attribute + " " + super.toString()
-				+ " Split Variance: " + getVariance() + "\n";
-		for (int i = 0; i < mapSplit.length; i++) {
-			v += "\t" + mapSplit[i] + "\n";
-		}
-		return v;
+		StringBuilder v = new StringBuilder("SPLIT : attribute=" + attribute + " " + super.toString()
+				+ " Split Variance: " + getVariance() + "\n");
+		for (SplitInfo info : mapSplit)
+			v.append("\t").append(info).append("\n");
+		return v.toString();
 	}
 }
