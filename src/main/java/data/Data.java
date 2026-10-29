@@ -13,7 +13,8 @@ import java.util.Scanner;
  *
  * Il formato del file di input è:
  *   @schema n                       numero di attributi indipendenti
- *   @desc nome discrete v1,v2,...   un attributo indipendente per riga
+ *   @desc nome v1,v2,...            un attributo indipendente discreto per riga
+ *   @desc nome continuous           un attributo indipendente continuo per riga
  *   @target nome                    attributo di classe (numerico)
  *   @data m                         numero di esempi, seguito da una riga per esempio
  */
@@ -33,7 +34,8 @@ public class Data {
 
 	/**
 	 * Costruttore: legge il file e popola schema degli attributi e matrice degli esempi.
-	 * Gli attributi indipendenti sono, in questa fase, tutti discreti.
+	 * Gli attributi indipendenti possono essere discreti o continui; i valori dei
+	 * secondi sono memorizzati come Double, quelli dei primi come String.
 	 *
 	 * @param fileName nome del file che contiene il training set
 	 * @throws TrainingDataException se il file è inesistente, lo schema è mancante,
@@ -59,9 +61,14 @@ public class Data {
 			while (!line.contains("@data")) {
 				s = line.split(" ");
 				if (s[0].equals("@desc")) {
-					// Attributo indipendente: @desc motor discrete A,B,C,D,E
-					String[] discreteValues = s[2].split(",");
-					explanatorySet.add(new DiscreteAttribute(s[1], iAttribute, discreteValues));
+					if (s[2].equals("continuous")) {
+						// Attributo continuo: @desc temperature continuous
+						explanatorySet.add(new ContinuousAttribute(s[1], iAttribute));
+					} else {
+						// Attributo discreto: @desc motor A,B,C,D,E (la parola "discrete" è opzionale)
+						String domain = s[2].equals("discrete") ? s[3] : s[2];
+						explanatorySet.add(new DiscreteAttribute(s[1], iAttribute, domain.split(",")));
+					}
 				} else if (s[0].equals("@target")) {
 					classAttribute = new ContinuousAttribute(s[1], iAttribute);
 				}
@@ -84,8 +91,12 @@ public class Data {
 			while (sc.hasNextLine() && iRow < numberOfExamples) {
 				line = sc.nextLine();
 				s = line.split(",");
-				for (short jColumn = 0; jColumn < s.length - 1; jColumn++)
-					data[iRow][jColumn] = s[jColumn];
+				for (short jColumn = 0; jColumn < s.length - 1; jColumn++) {
+					if (explanatorySet.get(jColumn) instanceof ContinuousAttribute)
+						data[iRow][jColumn] = Double.valueOf(s[jColumn]);
+					else
+						data[iRow][jColumn] = s[jColumn];
+				}
 				data[iRow][s.length - 1] = Double.valueOf(s[s.length - 1]);
 				iRow++;
 			}
@@ -136,7 +147,7 @@ public class Data {
 	 *
 	 * @param exampleIndex   indice dell'esempio (riga di data[][])
 	 * @param attributeIndex indice dell'attributo indipendente (colonna di data[][])
-	 * @return valore dell'attributo (String per gli attributi discreti)
+	 * @return valore dell'attributo (String se discreto, Double se continuo)
 	 */
 	public Object getExplanatoryValue(int exampleIndex, int attributeIndex) {
 		return data[exampleIndex][attributeIndex];
@@ -237,8 +248,40 @@ public class Data {
 	}
 
 	/**
+	 * Partiziona il sottoinsieme [inf, sup] rispetto al pivot (elemento centrale)
+	 * e restituisce la posizione finale del pivot.
+	 *
+	 * @param attribute attributo continuo rispetto al quale si partiziona
+	 * @param inf       primo indice del sottoinsieme (incluso)
+	 * @param sup       ultimo indice del sottoinsieme (incluso)
+	 * @return posizione del pivot dopo il partizionamento
+	 */
+	private int partition(ContinuousAttribute attribute, int inf, int sup) {
+		int i = inf;
+		int j = sup;
+		int med = (inf + sup) / 2;
+		Double x = (Double) getExplanatoryValue(med, attribute.getIndex());
+		swap(inf, med);
+
+		while (true) {
+			while (i <= sup && ((Double) getExplanatoryValue(i, attribute.getIndex())).compareTo(x) <= 0)
+				i++;
+			while (((Double) getExplanatoryValue(j, attribute.getIndex())).compareTo(x) > 0)
+				j--;
+			if (i < j)
+				swap(i, j);
+			else
+				break;
+		}
+		swap(inf, j);
+		return j;
+	}
+
+	/**
 	 * Ordina il sottoinsieme [inf, sup] con l'algoritmo quicksort, usando come
 	 * relazione d'ordine totale "&lt;=" sui valori dell'attributo.
+	 * Il tipo dell'attributo (discreto o continuo) è riconosciuto a runtime (RTTI)
+	 * per scegliere il partizionamento adeguato.
 	 * Si ricorre prima sulla partizione più piccola per limitare la profondità
 	 * della ricorsione.
 	 *
@@ -248,7 +291,11 @@ public class Data {
 	 */
 	private void quicksort(Attribute attribute, int inf, int sup) {
 		if (sup >= inf) {
-			int pos = partition((DiscreteAttribute) attribute, inf, sup);
+			int pos;
+			if (attribute instanceof DiscreteAttribute)
+				pos = partition((DiscreteAttribute) attribute, inf, sup);
+			else
+				pos = partition((ContinuousAttribute) attribute, inf, sup);
 
 			if ((pos - inf) < (sup - pos + 1)) {
 				quicksort(attribute, inf, pos - 1);
