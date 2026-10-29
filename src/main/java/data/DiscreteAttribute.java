@@ -1,49 +1,54 @@
 package data;
 
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
+
 /**
  * Rappresenta un attributo discreto del training set.
  * Un attributo discreto ha un dominio finito e noto di valori ammissibili,
- * memorizzati nell'array values[].
+ * memorizzati in un insieme ordinato (TreeSet) privo di duplicati.
+ * Implementa Iterable per consentire di scandire i valori con un ciclo for-each.
  *
  * Esempio (da servo.dat):
  *   motor con valori {A, B, C, D, E}
  *   pgain con valori {3, 4, 5, 6}
  */
-public class DiscreteAttribute extends Attribute {
+public class DiscreteAttribute extends Attribute implements Iterable<String> {
 
-	/** Array dei valori distinti che l'attributo può assumere. */
-	private String[] values;
+	/** Insieme ordinato dei valori distinti che l'attributo può assumere. */
+	private Set<String> values = new TreeSet<String>();
 
 	/**
-	 * Costruttore: invoca il costruttore della superclasse e salva
-	 * l'array dei valori discreti ammissibili.
+	 * Costruttore: invoca il costruttore della superclasse e inserisce
+	 * nell'insieme i valori discreti ammissibili.
 	 *
 	 * @param name   nome simbolico dell'attributo
 	 * @param index  posizione nella matrice data[][]
-	 * @param values array dei valori distinti del dominio dell'attributo
+	 * @param values valori del dominio dell'attributo (gli eventuali duplicati vengono scartati)
 	 */
 	public DiscreteAttribute(String name, int index, String[] values) {
 		super(name, index);
-		this.values = values;
+		for (int i = 0; i < values.length; i++)
+			this.values.add(values[i]);
 	}
 
 	/**
 	 * Restituisce il numero di valori distinti del dominio (cardinalità).
-	 * Utile per iterare sui valori possibili durante la costruzione dell'albero.
 	 *
-	 * @return lunghezza dell'array values[]
+	 * @return cardinalità dell'insieme dei valori
 	 */
 	public int getNumberOfDistinctValues() {
-		return values.length;
+		return values.size();
 	}
 
 	/**
-	 * Restituisce il valore discreto alla posizione i nell'array values[].
+	 * Restituisce un iteratore sui valori del dominio, in ordine lessicografico.
 	 *
-	 * @param i indice del valore da restituire
-	 * @return stringa corrispondente al valore alla posizione i
+	 * @return iteratore sui valori discreti dell'attributo
 	 */
-	public String getValue(int i) {
-		return values[i];
+	@Override
+	public Iterator<String> iterator() {
+		return values.iterator();
 	}
 }
