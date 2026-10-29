@@ -2,6 +2,8 @@ package data;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -24,7 +26,7 @@ public class Data {
 	private int numberOfExamples;
 
 	/** Attributi indipendenti (esplicativi) del training set. */
-	private Attribute[] explanatorySet;
+	private List<Attribute> explanatorySet = new LinkedList<Attribute>();
 
 	/** Attributo di classe (target), di tipo continuo. */
 	private ContinuousAttribute classAttribute;
@@ -49,7 +51,7 @@ public class Data {
 			if (!line.contains("@schema"))
 				throw new TrainingDataException("Schema mancante nel file: " + fileName);
 			String[] s = line.split(" ");
-			explanatorySet = new Attribute[Integer.parseInt(s[1])];
+			int explanatoryCount = Integer.parseInt(s[1]);
 
 			// Lettura delle dichiarazioni degli attributi, fino al marcatore "@data"
 			short iAttribute = 0;
@@ -59,7 +61,7 @@ public class Data {
 				if (s[0].equals("@desc")) {
 					// Attributo indipendente: @desc motor discrete A,B,C,D,E
 					String[] discreteValues = s[2].split(",");
-					explanatorySet[iAttribute] = new DiscreteAttribute(s[1], iAttribute, discreteValues);
+					explanatorySet.add(new DiscreteAttribute(s[1], iAttribute, discreteValues));
 				} else if (s[0].equals("@target")) {
 					classAttribute = new ContinuousAttribute(s[1], iAttribute);
 				}
@@ -68,6 +70,8 @@ public class Data {
 			}
 			if (classAttribute == null)
 				throw new TrainingDataException("Attributo target mancante nel file: " + fileName);
+			if (explanatorySet.size() != explanatoryCount)
+				throw new TrainingDataException("Schema incoerente con gli attributi dichiarati: " + fileName);
 
 			// Numero di esempi: @data 167
 			numberOfExamples = Integer.parseInt(line.split(" ")[1]);
@@ -75,7 +79,7 @@ public class Data {
 				throw new TrainingDataException("Training set vuoto nel file: " + fileName);
 
 			// Popolamento della matrice: es. E,E,5,4,0.28125095
-			data = new Object[numberOfExamples][explanatorySet.length + 1];
+			data = new Object[numberOfExamples][explanatorySet.size() + 1];
 			short iRow = 0;
 			while (sc.hasNextLine() && iRow < numberOfExamples) {
 				line = sc.nextLine();
@@ -106,13 +110,13 @@ public class Data {
 
 	/**
 	 * Restituisce il numero di attributi indipendenti (esplicativi).
-	 * Corrisponde alla lunghezza di explanatorySet[] ed è l'indice di colonna
+	 * Corrisponde alla cardinalità di explanatorySet ed è l'indice di colonna
 	 * dell'attributo di classe in data[][].
 	 *
 	 * @return numero di attributi indipendenti
 	 */
 	public int getNumberOfExplanatoryAttributes() {
-		return explanatorySet.length;
+		return explanatorySet.size();
 	}
 
 	/**
@@ -123,7 +127,7 @@ public class Data {
 	 * @return valore Double dell'attributo di classe
 	 */
 	public Double getClassValue(int exampleIndex) {
-		return (Double) data[exampleIndex][explanatorySet.length];
+		return (Double) data[exampleIndex][explanatorySet.size()];
 	}
 
 	/**
@@ -141,11 +145,11 @@ public class Data {
 	/**
 	 * Restituisce l'attributo indipendente alla posizione indicata.
 	 *
-	 * @param index posizione in explanatorySet[]
+	 * @param index posizione in explanatorySet
 	 * @return attributo indipendente corrispondente
 	 */
 	public Attribute getExplanatoryAttribute(int index) {
-		return explanatorySet[index];
+		return explanatorySet.get(index);
 	}
 
 	/**
@@ -167,9 +171,9 @@ public class Data {
 	public String toString() {
 		StringBuilder value = new StringBuilder();
 		for (int i = 0; i < numberOfExamples; i++) {
-			for (int j = 0; j < explanatorySet.length; j++)
+			for (int j = 0; j < explanatorySet.size(); j++)
 				value.append(data[i][j]).append(",");
-			value.append(data[i][explanatorySet.length]).append("\n");
+			value.append(data[i][explanatorySet.size()]).append("\n");
 		}
 		return value.toString();
 	}

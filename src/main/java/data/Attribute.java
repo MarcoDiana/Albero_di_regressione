@@ -4,7 +4,7 @@ package data;
  * Classe astratta che modella un generico attributo del training set.
  * Funge da superclasse comune per DiscreteAttribute e ContinuousAttribute,
  * permettendo di trattare attributi di tipo diverso in modo uniforme
- * (es. nell'array explanatorySet[] di Data).
+ * (es. nella lista explanatorySet di Data).
  */
 public abstract class Attribute {
 
