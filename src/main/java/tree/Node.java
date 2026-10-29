@@ -2,10 +2,7 @@ package tree;
 
 import java.io.Serializable;
 
-import data.Attribute;
-import data.ContinuousAttribute;
 import data.Data;
-import data.DiscreteAttribute;
 
 /**
  * Classe astratta che modella un generico nodo dell'albero di regressione.
@@ -26,23 +23,23 @@ abstract class Node implements Serializable {
 	 * Contatore statico condiviso tra tutte le istanze.
 	 * Ogni nuovo nodo riceve un identificatore unico crescente.
 	 */
-	static int idNodeCount = 0;
+	private static int idNodeCount = 0;
 
 	/** Identificatore univoco del nodo, assegnato al momento della creazione. */
-	int idNode;
+	private int idNode;
 
 	/** Primo indice (incluso) del sottoinsieme di esempi gestito da questo nodo. */
-	int beginExampleIndex;
+	private int beginExampleIndex;
 
 	/** Ultimo indice (incluso) del sottoinsieme di esempi gestito da questo nodo. */
-	int endExampleIndex;
+	private int endExampleIndex;
 
 	/**
 	 * Varianza SSE (Sum of Squared Errors) calcolata sull'attributo di classe
 	 * per il sottoinsieme [beginExampleIndex, endExampleIndex].
 	 * Misura quanto sono eterogenei i valori target in questo nodo.
 	 */
-	double variance;
+	private double variance;
 
 	/**
 	 * Costruttore: assegna un ID univoco al nodo, memorizza il range di esempi
@@ -126,6 +123,7 @@ abstract class Node implements Serializable {
 	 *
 	 * @return stringa nel formato "[Examples:begin-end] variance:val"
 	 */
+	@Override
 	public String toString() {
 		return "[Examples:" + beginExampleIndex + "-" + endExampleIndex + "] variance:" + variance;
 	}

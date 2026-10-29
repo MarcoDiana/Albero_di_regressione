@@ -39,15 +39,15 @@ public class RegressionTree implements Serializable {
 	/**
 	 * Nodo radice del sotto-albero corrente.
 	 * È un LeafNode se questo albero è una foglia,
-	 * oppure un SplitNode (DiscreteNode) se è un nodo interno.
+	 * oppure un SplitNode (DiscreteNode o ContinuousNode) se è un nodo interno.
 	 */
-	Node root;
+	private Node root;
 
 	/**
 	 * Array dei sotto-alberi figli, uno per ogni partizione del nodo radice.
 	 * È null se root è un LeafNode (le foglie non hanno figli).
 	 */
-	RegressionTree[] childTree;
+	private RegressionTree[] childTree;
 
 	// -------------------------------------------------------------------------
 	// Costruttori
@@ -58,7 +58,7 @@ public class RegressionTree implements Serializable {
 	 * Usato internamente da learnTree() per istanziare i sotto-alberi figli
 	 * prima di chiamare ricorsivamente learnTree() su di essi.
 	 */
-	RegressionTree() {
+	private RegressionTree() {
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class RegressionTree implements Serializable {
 	 * @param end                    ultimo indice del sottoinsieme corrente (incluso)
 	 * @param numberOfExamplesPerLeaf soglia: se |sottoinsieme| <= soglia → foglia
 	 */
-	void learnTree(Data trainingSet, int begin, int end, int numberOfExamplesPerLeaf) {
+	private void learnTree(Data trainingSet, int begin, int end, int numberOfExamplesPerLeaf) {
 		if (isLeaf(trainingSet, begin, end, numberOfExamplesPerLeaf)) {
 			// Il sottoinsieme è abbastanza piccolo: crea foglia con la media dei valori
 			root = new LeafNode(trainingSet, begin, end);
@@ -126,7 +126,7 @@ public class RegressionTree implements Serializable {
 	 * @param numberOfExamplesPerLeaf soglia di stop
 	 * @return true se il sottoinsieme è abbastanza piccolo da diventare foglia
 	 */
-	boolean isLeaf(Data trainingSet, int begin, int end, int numberOfExamplesPerLeaf) {
+	private boolean isLeaf(Data trainingSet, int begin, int end, int numberOfExamplesPerLeaf) {
 		return (end - begin + 1) <= numberOfExamplesPerLeaf;
 	}
 
@@ -199,7 +199,7 @@ public class RegressionTree implements Serializable {
 	 * @param current condizioni già accumulate percorrendo l'albero dalla radice
 	 *                (es. "X=A AND Y=B" per una chiamata ricorsiva profonda)
 	 */
-	void printRules(String current) {
+	private void printRules(String current) {
 		if (root instanceof LeafNode) {
 			// Foglia: costruisce e stampa la regola completa
 			// Se current è vuoto (albero con un solo nodo), non stampa il prefisso
@@ -240,6 +240,7 @@ public class RegressionTree implements Serializable {
 	 *
 	 * @return stringa che rappresenta l'intero (sotto-)albero
 	 */
+	@Override
 	public String toString() {
 		// root.toString() già include "\n" finale (definito in LeafNode e SplitNode)
 		String tree = root.toString() + "\n";

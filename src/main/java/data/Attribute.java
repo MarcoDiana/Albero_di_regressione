@@ -64,6 +64,7 @@ public abstract class Attribute implements Serializable {
 	 *
 	 * @return nome dell'attributo
 	 */
+	@Override
 	public String toString() {
 		return name;
 	}

@@ -1,9 +1,6 @@
 package tree;
 
-import data.Attribute;
-import data.ContinuousAttribute;
 import data.Data;
-import data.DiscreteAttribute;
 
 /**
  * Nodo foglia dell'albero di regressione.
@@ -23,7 +20,7 @@ class LeafNode extends Node {
 	 * È Double (non double) per poter restituire null in caso di nodo vuoto,
 	 * coerentemente con getClassValue() di Data.
 	 */
-	Double predictedClassValue;
+	private Double predictedClassValue;
 
 	/**
 	 * Costruttore: invoca il costruttore di Node (calcola SSE e assegna ID),
@@ -60,6 +57,7 @@ class LeafNode extends Node {
 	 *
 	 * @return 0
 	 */
+	@Override
 	int getNumberOfChildren() {
 		return 0;
 	}
@@ -70,6 +68,7 @@ class LeafNode extends Node {
 	 *
 	 * @return stringa nel formato "LEAF : class=val [Examples:begin-end] variance:sse"
 	 */
+	@Override
 	public String toString() {
 		return "LEAF : class=" + predictedClassValue + " " + super.toString() + "\n";
 	}
