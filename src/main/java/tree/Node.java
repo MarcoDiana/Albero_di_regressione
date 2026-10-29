@@ -1,3 +1,10 @@
+package tree;
+
+import data.Attribute;
+import data.ContinuousAttribute;
+import data.Data;
+import data.DiscreteAttribute;
+
 /**
  * Classe astratta che modella un generico nodo dell'albero di regressione.
  * Ogni nodo (interno o foglia) tiene traccia del sottoinsieme di esempi

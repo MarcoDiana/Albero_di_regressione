@@ -1,3 +1,10 @@
+package tree;
+
+import data.Attribute;
+import data.ContinuousAttribute;
+import data.Data;
+import data.DiscreteAttribute;
+
 /**
  * Nodo foglia dell'albero di regressione.
  * Una foglia non genera ulteriori ramificazioni: contiene la predizione

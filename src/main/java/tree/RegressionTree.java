@@ -1,3 +1,10 @@
+package tree;
+
+import data.Attribute;
+import data.ContinuousAttribute;
+import data.Data;
+import data.DiscreteAttribute;
+
 /**
  * Albero di regressione appreso induttivamente da un training set.
  *
@@ -14,7 +21,7 @@
  * Criterio di split: minimizzazione della varianza totale (somma degli SSE dei figli).
  * Soglia di stop: il sottoinsieme ha al più il 10% degli esempi del training set.
  */
-class RegressionTree {
+public class RegressionTree {
 
 	/**
 	 * Nodo radice del sotto-albero corrente.
@@ -47,7 +54,7 @@ class RegressionTree {
 	 *
 	 * @param trainingSet dataset di addestramento
 	 */
-	RegressionTree(Data trainingSet) {
+	public RegressionTree(Data trainingSet) {
 		learnTree(trainingSet, 0, trainingSet.getNumberOfExamples() - 1,
 				trainingSet.getNumberOfExamples() * 10 / 100);
 	}
@@ -160,7 +167,7 @@ class RegressionTree {
 	 *
 	 * Delega alla versione ricorsiva con stringa vuota come prefisso iniziale.
 	 */
-	void printRules() {
+	public void printRules() {
 		System.out.println("********* RULES **********\n");
 		printRules("");
 		System.out.println("\n**************************\n");
@@ -206,7 +213,7 @@ class RegressionTree {
 	/**
 	 * Stampa la struttura completa dell'albero con intestazione e piè di pagina.
 	 */
-	void printTree() {
+	public void printTree() {
 		System.out.println("********* TREE **********\n");
 		System.out.println(toString());
 		System.out.println("*************************\n");

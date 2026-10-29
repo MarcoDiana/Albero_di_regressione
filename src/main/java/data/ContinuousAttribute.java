@@ -1,3 +1,5 @@
+package data;
+
 /**
  * Rappresenta un attributo continuo (a valori reali) del training set.
  * A differenza di DiscreteAttribute, non memorizza un dominio finito di valori

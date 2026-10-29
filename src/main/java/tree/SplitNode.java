@@ -1,3 +1,10 @@
+package tree;
+
+import data.Attribute;
+import data.ContinuousAttribute;
+import data.Data;
+import data.DiscreteAttribute;
+
 /**
  * Classe astratta che modella un nodo interno (di split) dell'albero di regressione.
  * Estende Node aggiungendo la logica di partizionamento: il sottoinsieme di esempi

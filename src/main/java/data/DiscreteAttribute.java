@@ -1,3 +1,5 @@
+package data;
+
 /**
  * Rappresenta un attributo discreto del training set.
  * Un attributo discreto ha un dominio finito e noto di valori ammissibili,

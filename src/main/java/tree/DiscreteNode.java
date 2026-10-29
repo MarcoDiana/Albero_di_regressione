@@ -1,3 +1,10 @@
+package tree;
+
+import data.Attribute;
+import data.ContinuousAttribute;
+import data.Data;
+import data.DiscreteAttribute;
+
 /**
  * Nodo di split discreto dell'albero di regressione.
  * Implementa uno split su un attributo discreto: il dataset viene

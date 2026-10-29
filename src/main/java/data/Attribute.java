@@ -1,3 +1,5 @@
+package data;
+
 /**
  * Classe astratta che modella un generico attributo del training set.
  * Funge da superclasse comune per DiscreteAttribute e ContinuousAttribute,
@@ -22,7 +24,7 @@ public abstract class Attribute {
 	 * @param name  nome simbolico dell'attributo
 	 * @param index posizione nella matrice data[][]
 	 */
-	Attribute(String name, int index) {
+	protected Attribute(String name, int index) {
 		this.name = name;
 		this.index = index;
 	}

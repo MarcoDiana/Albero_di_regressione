@@ -1,5 +1,8 @@
 import java.io.FileNotFoundException;
 
+import data.Data;
+import tree.RegressionTree;
+
 /**
  * Classe di test per l'algoritmo di apprendimento dell'albero di regressione.
  *

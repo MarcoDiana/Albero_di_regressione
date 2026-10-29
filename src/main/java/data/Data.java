@@ -1,3 +1,5 @@
+package data;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
@@ -11,7 +13,7 @@ public class Data {
 	private Attribute explanatorySet[];
 	private ContinuousAttribute classAttribute;
 	
-	Data(String fileName)throws FileNotFoundException{
+	public Data(String fileName)throws FileNotFoundException{
 		
 		  File inFile = new File (fileName);
 
@@ -150,7 +152,7 @@ public class Data {
 		return classAttribute;
 	}
 
-	void sort(Attribute attribute, int beginExampleIndex, int endExampleIndex){
+	public void sort(Attribute attribute, int beginExampleIndex, int endExampleIndex){
 	
 			quicksort(attribute, beginExampleIndex, endExampleIndex);
 	}
