@@ -1,5 +1,7 @@
 package tree;
 
+import java.util.TreeSet;
+
 import data.Attribute;
 import data.ContinuousAttribute;
 import data.Data;
@@ -92,8 +94,8 @@ public class RegressionTree {
 				for (int i = 0; i < root.getNumberOfChildren(); i++) {
 					childTree[i] = new RegressionTree();
 					childTree[i].learnTree(trainingSet,
-							((SplitNode) root).getSplitInfo(i).beginIndex,
-							((SplitNode) root).getSplitInfo(i).endIndex,
+							((SplitNode) root).getSplitInfo(i).getBeginIndex(),
+							((SplitNode) root).getSplitInfo(i).getEndIndex(),
 							numberOfExamplesPerLeaf);
 				}
 			} else {
@@ -119,42 +121,34 @@ public class RegressionTree {
 	}
 
 	/**
-	 * Cerca il miglior attributo di split tra tutti gli attributi esplicativi,
-	 * quindi costruisce e restituisce il nodo di split corrispondente.
-	 * "Migliore" significa: splitVariance minima (somma SSE dei figli più bassa).
+	 * Cerca il miglior attributo di split tra tutti gli attributi indipendenti,
+	 * quindi restituisce il nodo di split corrispondente.
+	 * "Migliore" significa: splitVariance minima (somma degli SSE dei figli più bassa).
 	 *
-	 * ATTENZIONE — effetto collaterale sul dataset:
-	 * La creazione di ogni DiscreteNode ordina i dati per quell'attributo (in-place).
-	 * Dopo il ciclo di valutazione, i dati risultano ordinati per l'ultimo attributo
-	 * provato, NON per il migliore. Per questo motivo, dopo aver trovato l'indice
-	 * del vincitore, il metodo ricrea un DiscreteNode per quell'attributo: il
-	 * costruttore di SplitNode riordina i dati e ricostruisce mapSplit[] in modo
-	 * coerente con il layout attuale, garantendo che i range in getSplitInfo()
-	 * corrispondano effettivamente alla posizione degli esempi in memoria.
+	 * I nodi di split generati per i diversi attributi sono raccolti in un TreeSet,
+	 * che li mantiene ordinati per varianza (SplitNode è Comparable): il primo
+	 * elemento è quindi il migliore.
 	 *
-	 * @param trainingSet dataset (riordinato in-place dal metodo)
+	 * La creazione di ogni nodo ordina il training set (in-place) per il proprio
+	 * attributo, perciò al termine il training set risulta ordinato per l'ultimo
+	 * attributo provato. Prima di restituire il nodo vincente si riordina il range
+	 * per il suo attributo, così che gli indici di mapSplit corrispondano
+	 * alla disposizione effettiva degli esempi.
+	 *
+	 * @param trainingSet training set (riordinato in-place dal metodo)
 	 * @param begin       primo indice del sottoinsieme (incluso)
 	 * @param end         ultimo indice del sottoinsieme (incluso)
-	 * @return il SplitNode con la varianza totale più bassa, con dati allineati
+	 * @return nodo di split con la varianza più bassa, con gli esempi ordinati per il suo attributo
 	 */
-	SplitNode determineBestSplitNode(Data trainingSet, int begin, int end) {
-		// Fase 1: trova l'indice dell'attributo con varianza totale minima
-		int bestIndex = 0;
-		double bestVariance = Double.MAX_VALUE;
+	private SplitNode determineBestSplitNode(Data trainingSet, int begin, int end) {
+		TreeSet<SplitNode> ts = new TreeSet<SplitNode>();
 		for (int i = 0; i < trainingSet.getNumberOfExplanatoryAttributes(); i++) {
-			// Costruisce il nodo candidato: ordina i dati e calcola la varianza
-			DiscreteNode candidate = new DiscreteNode(trainingSet, begin, end,
-					(DiscreteAttribute) trainingSet.getExplanatoryAttribute(i));
-			if (candidate.getVariance() < bestVariance) {
-				bestVariance = candidate.getVariance();
-				bestIndex = i;
-			}
+			DiscreteAttribute attribute = (DiscreteAttribute) trainingSet.getExplanatoryAttribute(i);
+			ts.add(new DiscreteNode(trainingSet, begin, end, attribute));
 		}
-		// Fase 2: ricrea il nodo vincente per allineare i dati all'attributo migliore.
-		// Dopo il ciclo i dati sono ordinati per l'ultimo attributo provato;
-		// ricostruire il vincente ri-ordina i dati e aggiorna mapSplit[] correttamente.
-		return new DiscreteNode(trainingSet, begin, end,
-				(DiscreteAttribute) trainingSet.getExplanatoryAttribute(bestIndex));
+		SplitNode bestNode = ts.first();
+		trainingSet.sort(bestNode.getAttribute(), begin, end);
+		return bestNode;
 	}
 
 	// -------------------------------------------------------------------------
