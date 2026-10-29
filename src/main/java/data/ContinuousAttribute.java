@@ -5,8 +5,8 @@ package data;
  * A differenza di DiscreteAttribute, non memorizza un dominio finito di valori
  * perché un attributo continuo può assumere qualsiasi valore numerico reale.
  *
- * In questa fase del progetto è usato esclusivamente per l'attributo di classe
- * (target), che è il valore numerico da predire con l'albero di regressione.
+ * È usato per l'attributo di classe (target), che è il valore numerico da predire,
+ * e per gli attributi indipendenti numerici, che originano nodi di split continui.
  */
 public class ContinuousAttribute extends Attribute {
 
