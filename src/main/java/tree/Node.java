@@ -1,112 +1,130 @@
 package tree;
 
-import data.Data;
 import java.io.Serializable;
 
+import data.Data;
+
 /**
- * La classe astratta Node modella l'astrazione dell'entità nodo (fogliare o intermedio)
- * dell'albero di decisione.
+ * Classe astratta che modella un generico nodo dell'albero di regressione.
+ * Ogni nodo (interno o foglia) tiene traccia del sottoinsieme di esempi
+ * che gli compete (range [beginExampleIndex, endExampleIndex] nella matrice Data)
+ * e della varianza (SSE) di quel sottoinsieme rispetto all'attributo di classe.
+ *
+ * La varianza SSE è la misura di eterogeneità usata dall'algoritmo:
+ *   SSE(S) = Σ(yi - ȳ)² = Σyi² - (Σyi)²/|S|
+ * Un nodo con SSE=0 contiene esempi con identico valore di classe → foglia ideale.
  */
-public abstract class Node implements Serializable {
+abstract class Node implements Serializable {
 
-    private static int idNodeCount = 0;
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
-    private int idNode;
-    private int beginExampleIndex;
-    private int endExampleIndex;
-    private double variance;
+	/**
+	 * Contatore statico condiviso tra tutte le istanze.
+	 * Ogni nuovo nodo riceve un identificatore unico crescente.
+	 */
+	private static int idNodeCount = 0;
 
-    /**
-     * Costruttore di classe. Inizializza gli attributi e delega il calcolo
-     * della varianza (SSE) a un metodo dedicato.
-     *
-     * @param trainingSet       Oggetto di classe Data contenente il training set completo
-     * @param beginExampleIndex Indice iniziale del sotto-insieme di training
-     * @param endExampleIndex   Indice finale del sotto-insieme di training
-     */
-    public Node(Data trainingSet, int beginExampleIndex, int endExampleIndex) {
-        this.idNode = idNodeCount++;
-        this.beginExampleIndex = beginExampleIndex;
-        this.endExampleIndex = endExampleIndex;
-        this.variance = calculateVariance(trainingSet, beginExampleIndex, endExampleIndex);
-    }
+	/** Identificatore univoco del nodo, assegnato al momento della creazione. */
+	private int idNode;
 
-    /**
-     * Metodo helper che esegue matematicamente il calcolo della varianza locale (SSE)
-     * nel sotto-insieme di training assegnato.
-     *
-     * @param trainingSet Il dataset di riferimento
-     * @param begin       Indice di partenza
-     * @param end         Indice di fine
-     * @return Il valore dello SSE calcolato
-     */
-    protected double calculateVariance(Data trainingSet, int begin, int end) {
-        double sum = 0.0;
-        double sumSq = 0.0;
-        int n = end - begin + 1;
+	/** Primo indice (incluso) del sottoinsieme di esempi gestito da questo nodo. */
+	private int beginExampleIndex;
 
-        // Ottimizzazione: SSE = Σ(yi^2) - (Σyi)^2 / n
-        for (int i = begin; i <= end; i++) {
-            double y = trainingSet.getClassValue(i);
-            sum += y;
-            sumSq += (y * y);
-        }
+	/** Ultimo indice (incluso) del sottoinsieme di esempi gestito da questo nodo. */
+	private int endExampleIndex;
 
-        return sumSq - ((sum * sum) / n);
-    }
+	/**
+	 * Varianza SSE (Sum of Squared Errors) calcolata sull'attributo di classe
+	 * per il sottoinsieme [beginExampleIndex, endExampleIndex].
+	 * Misura quanto sono eterogenei i valori target in questo nodo.
+	 */
+	private double variance;
 
-    /**
-     * Restituisce l'identificativo numerico del nodo corrente.
-     *
-     * @return L'identificativo numerico del nodo (idNode)
-     */
-    public int getIdNode() {
-        return this.idNode;
-    }
+	/**
+	 * Costruttore: assegna un ID univoco al nodo, memorizza il range di esempi
+	 * e calcola la varianza SSE sull'attributo di classe nel range dato.
+	 *
+	 * Formula SSE equivalente (numericamente stabile):
+	 *   SSE = Σyi² - (Σyi)² / n
+	 *
+	 * @param trainingSet       dataset contenente gli esempi
+	 * @param beginExampleIndex primo indice del sottoinsieme (incluso)
+	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
+	 */
+	Node(Data trainingSet, int beginExampleIndex, int endExampleIndex) {
+		this.idNode = idNodeCount++;
+		this.beginExampleIndex = beginExampleIndex;
+		this.endExampleIndex = endExampleIndex;
 
-    /**
-     * Restituisce l'indice iniziale del sotto-insieme di esempi coperti dal nodo corrente.
-     *
-     * @return L'indice del primo esempio nel training set complessivo
-     */
-    public int getBeginExampleIndex() {
-        return this.beginExampleIndex;
-    }
+		// Calcola SSE con la formula Σyi² - (Σyi)²/n
+		// Più efficiente di calcolare prima la media e poi la somma degli scarti
+		int n = endExampleIndex - beginExampleIndex + 1;
+		double sum = 0;
+		double sumSq = 0;
+		for (int i = beginExampleIndex; i <= endExampleIndex; i++) {
+			double yi = trainingSet.getClassValue(i);
+			sum += yi;
+			sumSq += yi * yi;
+		}
+		variance = sumSq - (sum * sum) / n;
+	}
 
-    /**
-     * Restituisce l'indice finale del sotto-insieme di esempi coperti dal nodo corrente.
-     *
-     * @return L'indice dell'ultimo esempio nel training set complessivo
-     */
-    public int getEndExampleIndex() {
-        return this.endExampleIndex;
-    }
+	/**
+	 * Restituisce l'identificatore univoco del nodo.
+	 *
+	 * @return ID del nodo
+	 */
+	int getIdNode() {
+		return idNode;
+	}
 
-    /**
-     * Restituisce il valore dello SSE (varianza) calcolato per l'attributo di classe.
-     *
-     * @return Il valore di varianza associato al nodo
-     */
-    public double getVariance() {
-        return this.variance;
-    }
+	/**
+	 * Restituisce il primo indice del sottoinsieme di esempi.
+	 *
+	 * @return beginExampleIndex
+	 */
+	int getBeginExampleIndex() {
+		return beginExampleIndex;
+	}
 
-    /**
-     * Metodo astratto che restituisce il numero di nodi figli generati dallo split corrente.
-     * L'implementazione varia a seconda della tipologia del nodo concreto.
-     *
-     * @return Il numero di nodi figli sottostanti
-     */
-    public abstract int getNumberOfChildren();
+	/**
+	 * Restituisce l'ultimo indice del sottoinsieme di esempi.
+	 *
+	 * @return endExampleIndex
+	 */
+	int getEndExampleIndex() {
+		return endExampleIndex;
+	}
 
-    /**
-     * Concatena in una stringa le informazioni salienti del nodo corrente,
-     * includendo l'intervallo degli esempi coperti e il valore di varianza.
-     *
-     * @return La rappresentazione testuale dello stato del nodo
-     */
-    @Override
-    public String toString() {
-        return "[Examples:" + beginExampleIndex + "-" + endExampleIndex + "] variance:" + variance;
-    }
+	/**
+	 * Restituisce la varianza SSE del sottoinsieme di esempi del nodo.
+	 * Nelle sottoclassi può essere ridefinito (es. SplitNode restituisce
+	 * la somma delle varianze dei figli anziché quella del nodo corrente).
+	 *
+	 * @return varianza SSE
+	 */
+	double getVariance() {
+		return variance;
+	}
+
+	/**
+	 * Restituisce il numero di figli del nodo.
+	 * I nodi foglia restituiranno 0; i nodi di split restituiranno
+	 * il numero di partizioni generate dallo split.
+	 *
+	 * @return numero di nodi figli
+	 */
+	abstract int getNumberOfChildren();
+
+	/**
+	 * Rappresentazione testuale del nodo: range di esempi e varianza SSE.
+	 * Usato come base da SplitNode e LeafNode nel loro toString().
+	 *
+	 * @return stringa nel formato "[Examples:begin-end] variance:val"
+	 */
+	@Override
+	public String toString() {
+		return "[Examples:" + beginExampleIndex + "-" + endExampleIndex + "] variance:" + variance;
+	}
 }

@@ -1,20 +1,24 @@
 package data;
 
 /**
- * La classe ContinuousAttribute estende la classe Attribute e rappresenta
- * un attributo continuo (numerico/reale), il cui dominio è l'insieme dei numeri reali.
+ * Rappresenta un attributo continuo (a valori reali) del training set.
+ * A differenza di DiscreteAttribute, non memorizza un dominio finito di valori
+ * perché un attributo continuo può assumere qualsiasi valore numerico reale.
+ *
+ * È usato per l'attributo di classe (target), che è il valore numerico da predire,
+ * e per gli attributi indipendenti numerici, che originano nodi di split continui.
  */
 public class ContinuousAttribute extends Attribute {
 
-    /**
-     * Costruttore di classe. Inizializza il nome simbolico e l'identificativo
-     * numerico dell'attributo richiamando il costruttore della super-classe.
-     *
-     * @param name  Nome simbolico dell'attributo
-     * @param index Identificativo numerico dell'attributo
-     */
-    public ContinuousAttribute(String name, int index) {
-        // Invoca il costruttore della super-classe Attribute
-        super(name, index);
-    }
+	/**
+	 * Costruttore: invoca il costruttore della superclasse.
+	 * Non aggiunge attributi propri perché non è necessario
+	 * vincolare il dominio a un insieme finito di valori.
+	 *
+	 * @param name  nome simbolico dell'attributo (es. "class")
+	 * @param index posizione nella matrice data[][]
+	 */
+	public ContinuousAttribute(String name, int index) {
+		super(name, index);
+	}
 }

@@ -3,71 +3,73 @@ package tree;
 import data.Data;
 
 /**
- * La classe LeafNode estende Node e modella l'entità nodo fogliare
- * (nodo terminale) dell'albero di decisione. Questo nodo rappresenta
- * la previsione finale della variabile target.
+ * Nodo foglia dell'albero di regressione.
+ * Una foglia non genera ulteriori ramificazioni: contiene la predizione
+ * del valore di classe per tutti gli esempi che vi affluiscono.
+ *
+ * Il valore predetto è la media aritmetica dei valori di classe
+ * degli esempi nel range [beginExampleIndex, endExampleIndex].
+ * Questa è la scelta ottimale (minimizza MSE locale) quando non si può
+ * o non conviene splittare ulteriormente il sottoinsieme.
  */
-public class LeafNode extends Node {
+class LeafNode extends Node {
 
-    /**
-     * Valore dell'attributo di classe espresso (predetto) nella foglia corrente.
-     * Corrisponde alla media aritmetica dei valori dell'attributo target nel sotto-insieme.
-     */
-    private Double predictedClassValue;
+	/**
+	 * Valore di classe predetto per gli esempi che ricadono in questo nodo.
+	 * Calcolato come media aritmetica dei valori target del sottoinsieme.
+	 * È Double (non double) per poter restituire null in caso di nodo vuoto,
+	 * coerentemente con getClassValue() di Data.
+	 */
+	private Double predictedClassValue;
 
-    /**
-     * Costruttore della classe. Invoca il costruttore della superclasse Node
-     * per inizializzare indici e varianza, dopodiché avvalora l'attributo
-     * predictedClassValue eseguendo la media matematica dei valori di classe.
-     *
-     * @param trainingSet       Oggetto contenente il training set complessivo
-     * @param beginExampleIndex Indice di inizio della porzione di training assegnata alla foglia
-     * @param endExampleIndex   Indice di fine della porzione di training assegnata alla foglia
-     */
-    public LeafNode(Data trainingSet, int beginExampleIndex, int endExampleIndex) {
-        // Invocazione al costruttore della superclasse (che calcola anche la varianza SSE)
-        super(trainingSet, beginExampleIndex, endExampleIndex);
+	/**
+	 * Costruttore: invoca il costruttore di Node (calcola SSE e assegna ID),
+	 * poi calcola il valore predetto come media dei valori di classe del sottoinsieme.
+	 *
+	 * @param trainingSet       dataset contenente gli esempi
+	 * @param beginExampleIndex primo indice del sottoinsieme (incluso)
+	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
+	 */
+	LeafNode(Data trainingSet, int beginExampleIndex, int endExampleIndex) {
+		super(trainingSet, beginExampleIndex, endExampleIndex);
 
-        // Calcolo del valore predetto: media aritmetica dei valori dell'attributo target
-        double sum = 0.0;
-        int n = endExampleIndex - beginExampleIndex + 1; // Numero totale di elementi nel nodo
+		// Calcola la media dei valori di classe: ȳ = Σyi / n
+		// Questo valore minimizza l'MSE su questo sottoinsieme
+		int n = endExampleIndex - beginExampleIndex + 1;
+		double sum = 0;
+		for (int i = beginExampleIndex; i <= endExampleIndex; i++) {
+			sum += trainingSet.getClassValue(i);
+		}
+		predictedClassValue = sum / n;
+	}
 
-        for (int i = beginExampleIndex; i <= endExampleIndex; i++) {
-            sum += trainingSet.getClassValue(i); // Somma i valori target degli esempi coperti
-        }
+	/**
+	 * Restituisce il valore di classe predetto per gli esempi di questo nodo.
+	 *
+	 * @return media dei valori di classe del sottoinsieme
+	 */
+	Double getPredictedClassValue() {
+		return predictedClassValue;
+	}
 
-        this.predictedClassValue = sum / n; // Calcola e assegna la media
-    }
+	/**
+	 * Un nodo foglia non ha figli: restituisce sempre 0.
+	 *
+	 * @return 0
+	 */
+	@Override
+	int getNumberOfChildren() {
+		return 0;
+	}
 
-    /**
-     * Restituisce il valore predetto calcolato per questo specifico nodo fogliare.
-     *
-     * @return Il valore numerico della previsione (di tipo Double)
-     */
-    public Double getPredictedClassValue() {
-        return this.predictedClassValue;
-    }
-
-    /**
-     * Restituisce il numero di ramificazioni (figli) originanti dal nodo.
-     * Essendo la classe LeafNode un nodo terminale (foglia), restituisce costantemente 0.
-     *
-     * @return Il numero di figli (0)
-     */
-    @Override
-    public int getNumberOfChildren() {
-        return 0;
-    }
-
-    /**
-     * Concatena il marcatore "LEAF", il valore di classe predetto
-     * e le informazioni base del nodo formattate dalla superclasse (Node.toString()).
-     * Esempio output: "LEAF : class=4.59 Nodo: [Examples:0-9] variance:2.98"
-     *
-     * @return Stringa testuale descrittiva del nodo fogliare
-     */
-    @Override
-    public String toString() {
-        return "LEAF : class=" + this.predictedClassValue + " Nodo: " + super.toString();
-    }
+	/**
+	 * Rappresentazione testuale del nodo foglia: mostra il valore predetto
+	 * e le informazioni di base (range esempi, varianza) ereditate da Node.
+	 *
+	 * @return stringa nel formato "LEAF : class=val [Examples:begin-end] variance:sse"
+	 */
+	@Override
+	public String toString() {
+		return "LEAF : class=" + predictedClassValue + " " + super.toString() + "\n";
+	}
 }

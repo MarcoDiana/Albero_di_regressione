@@ -1,337 +1,331 @@
 package data;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
 /**
- * La classe Data modella l'insieme di esempi di training.
- * Analizza e legge autonomamente la struttura di un file di testo
- * per configurare gli attributi e popolare la matrice dei dati.
+ * Modella l'insieme degli esempi di training.
+ * Il training set è memorizzato in una matrice (numero di esempi) x (numero di attributi):
+ * le prime colonne contengono gli attributi indipendenti, l'ultima l'attributo di classe.
+ *
+ * Il formato del file di input è:
+ *   @schema n                       numero di attributi indipendenti
+ *   @desc nome v1,v2,...            un attributo indipendente discreto per riga
+ *   @desc nome continuous           un attributo indipendente continuo per riga
+ *   @target nome                    attributo di classe (numerico)
+ *   @data m                         numero di esempi, seguito da una riga per esempio
  */
 public class Data {
 
-    // Matrice Object che contiene il training set (numero esempi X numero attributi)
-    private Object[][] data;
+	/** Matrice che contiene il training set (esempi x attributi, classe nell'ultima colonna). */
+	private Object[][] data;
 
-    // Cardinalità (numero di righe) del training set
-    private int numberOfExamples;
+	/** Cardinalità del training set. */
+	private int numberOfExamples;
 
-    // Lista di oggetti Attribute per rappresentare gli attributi indipendenti (esplicativi)
-    private List<Attribute> explanatorySet;
+	/** Attributi indipendenti (esplicativi) del training set. */
+	private List<Attribute> explanatorySet = new LinkedList<Attribute>();
 
-    // Oggetto ContinuousAttribute per modellare l'attributo di classe target (numerico)
-    private ContinuousAttribute classAttribute;
+	/** Attributo di classe (target), di tipo continuo. */
+	private ContinuousAttribute classAttribute;
 
-    /**
-     * Costruttore di classe. Esegue il parsing del file di testo per configurare
-     * gli attributi esplicativi, l'attributo target e popolare la matrice dei dati.
-     * Verifica la corretta formattazione logica e fisica del dataset.
-     *
-     * @param fileName Nome del file di testo contenente il dataset (es. "servo.dat")
-     * @throws TrainingDataException Sollevata in caso di acquisizione errata:
-     *                               file inesistente, schema mancante, dataset vuoto
-     *                               o privo di variabile target numerica.
-     */
-    public Data(String fileName) throws TrainingDataException {
-        // Proviamo ad aprire il file
-        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(fileName))) {
-            String line;
-            int explanatoryCount = 0;
-            int currentExample = 0;
-            boolean schemaFound = false;
+	/**
+	 * Costruttore: legge il file e popola schema degli attributi e matrice degli esempi.
+	 * Gli attributi indipendenti possono essere discreti o continui; i valori dei
+	 * secondi sono memorizzati come Double, quelli dei primi come String.
+	 *
+	 * @param fileName nome del file che contiene il training set
+	 * @throws TrainingDataException se il file è inesistente, lo schema è mancante,
+	 *                               il training set è vuoto o manca l'attributo target
+	 */
+	public Data(String fileName) throws TrainingDataException {
+		Scanner sc = null;
+		try {
+			sc = new Scanner(new File(fileName));
 
-            while ((line = br.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty()) continue;
+			// Lettura dello schema: "@schema n" indica il numero di attributi indipendenti
+			if (!sc.hasNextLine())
+				throw new TrainingDataException("File vuoto: " + fileName);
+			String line = sc.nextLine();
+			if (!line.contains("@schema"))
+				throw new TrainingDataException("Schema mancante nel file: " + fileName);
+			String[] s = line.split(" ");
+			int explanatoryCount = Integer.parseInt(s[1]);
 
-                // 1. Lettura numero totale di attributi indipendenti
-                if (line.startsWith("@schema")) {
-                    int totalAttributes = Integer.parseInt(line.split("\\s+")[1]);
-                    explanatorySet = new LinkedList<Attribute>();
-                    schemaFound = true;
-                }
-                // 2. Creazione DiscreteAttribute per ogni riga @desc
-                else if (line.startsWith("@desc")) {
-                    if (!schemaFound) {
-                        throw new TrainingDataException("Schema mancante nel file: " + fileName);
-                    }
-                    String[] tokens = line.split("\\s+");
-                    String attrName = tokens[1];
-                    String[] attrValues = tokens[2].split(",");
+			// Lettura delle dichiarazioni degli attributi, fino al marcatore "@data"
+			short iAttribute = 0;
+			line = sc.nextLine();
+			while (!line.contains("@data")) {
+				s = line.split(" ");
+				if (s[0].equals("@desc")) {
+					if (s[2].equals("continuous")) {
+						// Attributo continuo: @desc temperature continuous
+						explanatorySet.add(new ContinuousAttribute(s[1], iAttribute));
+					} else {
+						// Attributo discreto: @desc motor A,B,C,D,E (la parola "discrete" è opzionale)
+						String domain = s[2].equals("discrete") ? s[3] : s[2];
+						explanatorySet.add(new DiscreteAttribute(s[1], iAttribute, domain.split(",")));
+					}
+				} else if (s[0].equals("@target")) {
+					classAttribute = new ContinuousAttribute(s[1], iAttribute);
+				}
+				iAttribute++;
+				line = sc.nextLine();
+			}
+			if (classAttribute == null)
+				throw new TrainingDataException("Attributo target mancante nel file: " + fileName);
+			if (explanatorySet.size() != explanatoryCount)
+				throw new TrainingDataException("Schema incoerente con gli attributi dichiarati: " + fileName);
 
-                    explanatorySet.add(new DiscreteAttribute(attrName, explanatoryCount, attrValues));
-                    explanatoryCount++;
-                }
-                // 3. Creazione attributo target continuo
-                else if (line.startsWith("@target")) {
-                    String targetName = line.split("\\s+")[1];
-                    classAttribute = new ContinuousAttribute(targetName, explanatoryCount);
-                }
-                // 4. Tag @data (alloca la memoria per la matrice)
-                else if (line.startsWith("@data")) {
-                    int declaredExamples = Integer.parseInt(line.split("\\s+")[1]);
-                    if (declaredExamples == 0) {
-                        throw new TrainingDataException("Training set vuoto (0 esempi dichiarati) nel file: " + fileName);
-                    }
-                    numberOfExamples = declaredExamples;
-                    data = new Object[numberOfExamples][explanatoryCount + 1];
-                }
-                // 5. Popolamento matrice dati effettivi
-                else {
-                    // Controlli di integrità prima di inserire dati
-                    if (explanatorySet == null || !schemaFound) {
-                        throw new TrainingDataException("Schema mancante nel file: " + fileName);
-                    }
-                    if (classAttribute == null) {
-                        throw new TrainingDataException("Training set privo di variabile target numerica nel file: " + fileName);
-                    }
+			// Numero di esempi: @data 167
+			numberOfExamples = Integer.parseInt(line.split(" ")[1]);
+			if (numberOfExamples <= 0)
+				throw new TrainingDataException("Training set vuoto nel file: " + fileName);
 
-                    String[] values = line.split(",");
-                    for (int j = 0; j < explanatorySet.size(); j++) {
-                        data[currentExample][j] = values[j].trim();
-                    }
-                    int targetIndex = classAttribute.getIndex();
-                    data[currentExample][targetIndex] = Double.valueOf(values[targetIndex].trim());
-                    currentExample++;
-                }
-            }
+			// Popolamento della matrice: es. E,E,5,4,0.28125095
+			data = new Object[numberOfExamples][explanatorySet.size() + 1];
+			short iRow = 0;
+			while (sc.hasNextLine() && iRow < numberOfExamples) {
+				line = sc.nextLine();
+				s = line.split(",");
+				for (short jColumn = 0; jColumn < s.length - 1; jColumn++) {
+					if (explanatorySet.get(jColumn) instanceof ContinuousAttribute)
+						data[iRow][jColumn] = Double.valueOf(s[jColumn]);
+					else
+						data[iRow][jColumn] = s[jColumn];
+				}
+				data[iRow][s.length - 1] = Double.valueOf(s[s.length - 1]);
+				iRow++;
+			}
+		} catch (FileNotFoundException e) {
+			throw new TrainingDataException("Impossibile aprire il file del training set: " + fileName, e);
+		} catch (java.util.NoSuchElementException | NumberFormatException | ArrayIndexOutOfBoundsException e) {
+			throw new TrainingDataException("Formato del training set non valido: " + fileName, e);
+		} finally {
+			if (sc != null)
+				sc.close();
+		}
+	}
 
-            // A fine file, assicuriamoci che non fosse un file completamente bianco
-            // o con solo commenti e niente dati validi.
-            if (!schemaFound) {
-                throw new TrainingDataException("Schema mancante nel file: " + fileName);
-            }
-            if (classAttribute == null) {
-                throw new TrainingDataException("Training set privo di variabile target numerica nel file: " + fileName);
-            }
-            if (currentExample == 0 || numberOfExamples == 0) {
-                throw new TrainingDataException("Training set vuoto nel file: " + fileName);
-            }
+	/**
+	 * Restituisce il numero di esempi nel training set.
+	 *
+	 * @return cardinalità del training set
+	 */
+	public int getNumberOfExamples() {
+		return numberOfExamples;
+	}
 
-        } catch (java.io.FileNotFoundException e) {
-            // Se il file non esiste rilanciamo l'eccezione passandole la stringa di errore di sistema.
-            throw new TrainingDataException(e.toString());
+	/**
+	 * Restituisce il numero di attributi indipendenti (esplicativi).
+	 * Corrisponde alla cardinalità di explanatorySet ed è l'indice di colonna
+	 * dell'attributo di classe in data[][].
+	 *
+	 * @return numero di attributi indipendenti
+	 */
+	public int getNumberOfExplanatoryAttributes() {
+		return explanatorySet.size();
+	}
 
-        } catch (java.io.IOException e) {
-            // Errore generico di lettura su disco
-            throw new TrainingDataException("Errore I/O durante la lettura del file: " + e.getMessage());
+	/**
+	 * Restituisce il valore dell'attributo di classe per un esempio.
+	 * Il valore è memorizzato nell'ultima colonna di data[][].
+	 *
+	 * @param exampleIndex indice dell'esempio (riga di data[][])
+	 * @return valore Double dell'attributo di classe
+	 */
+	public Double getClassValue(int exampleIndex) {
+		return (Double) data[exampleIndex][explanatorySet.size()];
+	}
 
-        } catch (Exception e) {
-            // Catturiamo formattazioni errate (es. NumberFormatException) e lanciamo un errore coerente
-            throw new TrainingDataException("Formato del dataset anomalo o non valido: " + e.getMessage());
-        }
-    }
+	/**
+	 * Restituisce il valore di un attributo indipendente per un dato esempio.
+	 * L'indice dell'attributo coincide con l'indice di colonna in data[][].
+	 *
+	 * @param exampleIndex   indice dell'esempio (riga di data[][])
+	 * @param attributeIndex indice dell'attributo indipendente (colonna di data[][])
+	 * @return valore dell'attributo (String se discreto, Double se continuo)
+	 */
+	public Object getExplanatoryValue(int exampleIndex, int attributeIndex) {
+		return data[exampleIndex][attributeIndex];
+	}
 
-    /**
-     * Restituisce la cardinalità dell'insieme di esempi (numero di righe).
-     *
-     * @return Il numero di esempi di training (int)
-     */
-    public int getNumberOfExamples() {
-        return this.numberOfExamples;
-    }
+	/**
+	 * Restituisce l'attributo indipendente alla posizione indicata.
+	 *
+	 * @param index posizione in explanatorySet
+	 * @return attributo indipendente corrispondente
+	 */
+	public Attribute getExplanatoryAttribute(int index) {
+		return explanatorySet.get(index);
+	}
 
-    /**
-     * Restituisce la cardinalità dell'insieme degli attributi indipendenti.
-     *
-     * @return Il numero di attributi esplicativi (int)
-     */
-    public int getNumberOfExplanatoryAttributes() {
-        return this.explanatorySet.size();
-    }
+	/**
+	 * Restituisce l'attributo di classe (target).
+	 *
+	 * @return attributo di classe, di tipo continuo
+	 */
+	public ContinuousAttribute getClassAttribute() {
+		return classAttribute;
+	}
 
-    /**
-     * Restituisce il valore numerico dell'attributo di classe per l'esempio specificato.
-     *
-     * @param exampleIndex Indice di riga dell'esempio nella matrice data[][]
-     * @return Il valore Double dell'attributo target
-     */
-    public Double getClassValue(int exampleIndex) {
-        return (Double) this.data[exampleIndex][this.classAttribute.getIndex()];
-    }
+	/**
+	 * Rappresentazione testuale del training set: una riga per esempio,
+	 * con i valori separati da virgola e la classe come ultimo valore.
+	 *
+	 * @return stringa che contiene tutti gli esempi
+	 */
+	@Override
+	public String toString() {
+		StringBuilder value = new StringBuilder();
+		for (int i = 0; i < numberOfExamples; i++) {
+			for (int j = 0; j < explanatorySet.size(); j++)
+				value.append(data[i][j]).append(",");
+			value.append(data[i][explanatorySet.size()]).append("\n");
+		}
+		return value.toString();
+	}
 
-    /**
-     * Restituisce il valore di un attributo indipendente per uno specifico esempio.
-     *
-     * @param exampleIndex   Indice di riga dell'esempio nella matrice data[][]
-     * @param attributeIndex Indice di colonna dell'attributo indipendente
-     * @return L'oggetto Object associato all'attributo richiesto
-     */
-    public Object getExplanatoryValue(int exampleIndex, int attributeIndex) {
-        return this.data[exampleIndex][attributeIndex];
-    }
+	/**
+	 * Ordina gli esempi del sottoinsieme [beginExampleIndex, endExampleIndex]
+	 * rispetto ai valori dell'attributo indicato.
+	 *
+	 * @param attribute         attributo rispetto al quale ordinare
+	 * @param beginExampleIndex primo indice del sottoinsieme (incluso)
+	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
+	 */
+	public void sort(Attribute attribute, int beginExampleIndex, int endExampleIndex) {
+		quicksort(attribute, beginExampleIndex, endExampleIndex);
+	}
 
-    /**
-     * Restituisce l'oggetto Attribute esplicativo memorizzato all'indice specificato.
-     *
-     * @param index Indice nell'array explanatorySet[]
-     * @return L'oggetto Attribute corrispondente
-     */
-    public Attribute getExplanatoryAttribute(int index) {
-        return this.explanatorySet.get(index);
-    }
+	/**
+	 * Scambia l'esempio i con l'esempio j, colonna per colonna
+	 * (attributi indipendenti e attributo di classe).
+	 *
+	 * @param i indice del primo esempio
+	 * @param j indice del secondo esempio
+	 */
+	private void swap(int i, int j) {
+		Object temp;
+		for (int k = 0; k < getNumberOfExplanatoryAttributes() + 1; k++) {
+			temp = data[i][k];
+			data[i][k] = data[j][k];
+			data[j][k] = temp;
+		}
+	}
 
-    /**
-     * Restituisce l'oggetto ContinuousAttribute associato all'attributo di classe.
-     *
-     * @return L'attributo di classe target
-     */
-    public ContinuousAttribute getClassAttribute() {
-        return this.classAttribute;
-    }
+	/**
+	 * Partiziona il sottoinsieme [inf, sup] rispetto al pivot (elemento centrale)
+	 * e restituisce la posizione finale del pivot.
+	 *
+	 * @param attribute attributo discreto rispetto al quale si partiziona
+	 * @param inf       primo indice del sottoinsieme (incluso)
+	 * @param sup       ultimo indice del sottoinsieme (incluso)
+	 * @return posizione del pivot dopo il partizionamento
+	 */
+	private int partition(DiscreteAttribute attribute, int inf, int sup) {
+		int i = inf;
+		int j = sup;
+		int med = (inf + sup) / 2;
+		String x = (String) getExplanatoryValue(med, attribute.getIndex());
+		swap(inf, med);
 
-    /**
-     * Concatena in una stringa i valori di tutti gli attributi per ogni esempio.
-     *
-     * @return Una stringa testuale che rappresenta l'intero dataset in memoria
-     */
-    @Override
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        for (int i = 0; i < numberOfExamples; i++) {
-            s.append(i + 1).append(": ");
-            for (int j = 0; j < explanatorySet.size(); j++) {
-                s.append(data[i][j]).append(", ");
-            }
-            s.append(data[i][classAttribute.getIndex()]).append("\n");
-        }
-        return s.toString();
-    }
+		while (true) {
+			while (i <= sup && ((String) getExplanatoryValue(i, attribute.getIndex())).compareTo(x) <= 0)
+				i++;
+			while (((String) getExplanatoryValue(j, attribute.getIndex())).compareTo(x) > 0)
+				j--;
+			if (i < j)
+				swap(i, j);
+			else
+				break;
+		}
+		swap(inf, j);
+		return j;
+	}
 
-    /**
-     * Scambia internamente due intere righe (vettori Object[]) della matrice data[][],
-     * garantendo che l'associazione tra attributi esplicativi e valore target rimanga coerente.
-     *
-     * @param i Indice della prima riga da scambiare
-     * @param j Indice della seconda riga da scambiare
-     */
-    private void swap(int i, int j) {
-        Object[] temp = data[i];
-        data[i] = data[j];
-        data[j] = temp;
-    }
+	/**
+	 * Partiziona il sottoinsieme [inf, sup] rispetto al pivot (elemento centrale)
+	 * e restituisce la posizione finale del pivot.
+	 *
+	 * @param attribute attributo continuo rispetto al quale si partiziona
+	 * @param inf       primo indice del sottoinsieme (incluso)
+	 * @param sup       ultimo indice del sottoinsieme (incluso)
+	 * @return posizione del pivot dopo il partizionamento
+	 */
+	private int partition(ContinuousAttribute attribute, int inf, int sup) {
+		int i = inf;
+		int j = sup;
+		int med = (inf + sup) / 2;
+		Double x = (Double) getExplanatoryValue(med, attribute.getIndex());
+		swap(inf, med);
 
-    /**
-     * Ordina il sottoinsieme di esempi compresi nell'intervallo [beginExampleIndex, endExampleIndex]
-     * rispetto allo specifico attributo passato in input.
-     *
-     * @param attribute         Attributo su cui basare l'ordinamento
-     * @param beginExampleIndex Indice iniziale del sottoinsieme
-     * @param endExampleIndex   Indice finale del sottoinsieme
-     */
-    public void sort(Attribute attribute, int beginExampleIndex, int endExampleIndex) {
-        quicksort(attribute, beginExampleIndex, endExampleIndex);
-    }
+		while (true) {
+			while (i <= sup && ((Double) getExplanatoryValue(i, attribute.getIndex())).compareTo(x) <= 0)
+				i++;
+			while (((Double) getExplanatoryValue(j, attribute.getIndex())).compareTo(x) > 0)
+				j--;
+			if (i < j)
+				swap(i, j);
+			else
+				break;
+		}
+		swap(inf, j);
+		return j;
+	}
 
-    /**
-     * Struttura ricorsiva di controllo del Quicksort. Identifica il tipo di attributo
-     * a runtime per invocare il corretto metodo di partizionamento.
-     *
-     * @param attribute Attributo su cui ordinare
-     * @param inf       Indice inferiore del sottointervallo
-     * @param sup       Indice superiore del sottointervallo
-     */
-    private void quicksort(Attribute attribute, int inf, int sup) {
-        if (inf < sup) {
-            int pivot;
-            // Uso del meccanismo RTTI (instanceof) per smistare il partizionamento polimorfico
-            if (attribute instanceof DiscreteAttribute) {
-                pivot = partition((DiscreteAttribute) attribute, inf, sup);
-            } else {
-                pivot = partition((ContinuousAttribute) attribute, inf, sup);
-            }
-            quicksort(attribute, inf, pivot - 1);
-            quicksort(attribute, pivot + 1, sup);
-        }
-    }
+	/**
+	 * Ordina il sottoinsieme [inf, sup] con l'algoritmo quicksort, usando come
+	 * relazione d'ordine totale "&lt;=" sui valori dell'attributo.
+	 * Il tipo dell'attributo (discreto o continuo) è riconosciuto a runtime (RTTI)
+	 * per scegliere il partizionamento adeguato.
+	 * Si ricorre prima sulla partizione più piccola per limitare la profondità
+	 * della ricorsione.
+	 *
+	 * @param attribute attributo rispetto al quale ordinare
+	 * @param inf       primo indice del sottoinsieme (incluso)
+	 * @param sup       ultimo indice del sottoinsieme (incluso)
+	 */
+	private void quicksort(Attribute attribute, int inf, int sup) {
+		if (sup >= inf) {
+			int pos;
+			if (attribute instanceof DiscreteAttribute)
+				pos = partition((DiscreteAttribute) attribute, inf, sup);
+			else
+				pos = partition((ContinuousAttribute) attribute, inf, sup);
 
-    /**
-     * Esegue il partizionamento per attributi DISCRETI.
-     * Sfrutta l'ordinamento lessicografico tramite il metodo String.compareTo().
-     *
-     * @param attribute L'attributo discreto di riferimento
-     * @param inf       Indice inferiore
-     * @param sup       Indice superiore
-     * @return L'indice del pivot posizionato
-     */
-    private int partition(DiscreteAttribute attribute, int inf, int sup) {
-        int attributeIndex = attribute.getIndex();
-        String pivotValue = (String) data[inf][attributeIndex];
-        int i = inf;
-        int j = sup;
+			if ((pos - inf) < (sup - pos + 1)) {
+				quicksort(attribute, inf, pos - 1);
+				quicksort(attribute, pos + 1, sup);
+			} else {
+				quicksort(attribute, pos + 1, sup);
+				quicksort(attribute, inf, pos - 1);
+			}
+		}
+	}
 
-        while (i < j) {
-            while (i <= sup && ((String) data[i][attributeIndex]).compareTo(pivotValue) <= 0) {
-                i++;
-            }
-            while (j >= inf && ((String) data[j][attributeIndex]).compareTo(pivotValue) > 0) {
-                j--;
-            }
-            if (i < j) {
-                swap(i, j);
-            }
-        }
-        swap(inf, j);
-        return j;
-    }
+	/**
+	 * Punto di ingresso di prova: carica servo.dat e ne stampa il contenuto
+	 * ordinato rispetto a ciascun attributo indipendente.
+	 *
+	 * @param args argomenti da riga di comando (non utilizzati)
+	 */
+	public static void main(String[] args) {
+		try {
+			Data trainingSet = new Data("servo.dat");
+			System.out.println(trainingSet);
 
-    /**
-     * Esegue il partizionamento per attributi CONTINUI.
-     * Sfrutta l'ordinamento numerico crescente tramite il metodo Double.compareTo().
-     *
-     * @param attribute L'attributo continuo di riferimento
-     * @param inf       Indice inferiore
-     * @param sup       Indice superiore
-     * @return L'indice del pivot posizionato
-     */
-    private int partition(ContinuousAttribute attribute, int inf, int sup) {
-        int attributeIndex = attribute.getIndex();
-        Double pivotValue = (Double) data[inf][attributeIndex];
-        int i = inf;
-        int j = sup;
-
-        while (i < j) {
-            while (i <= sup && ((Double) data[i][attributeIndex]).compareTo(pivotValue) <= 0) {
-                i++;
-            }
-            while (j >= inf && ((Double) data[j][attributeIndex]).compareTo(pivotValue) > 0) {
-                j--;
-            }
-            if (i < j) {
-                swap(i, j);
-            }
-        }
-        swap(inf, j);
-        return j;
-    }
-
-    /**
-     * Metodo d'esecuzione per testare il funzionamento del caricamento dinamico
-     * e gestire la possibile eccezione in caso di file anomalo.
-     *
-     * @param args Argomenti da linea di comando (non utilizzati)
-     */
-    public static void main(String[] args) {
-        try {
-            // Ora l'istruzione è protetta dal blocco try
-            Data trainingData = new Data("servo.dat");
-            System.out.println(trainingData);
-
-            if (trainingData.getNumberOfExplanatoryAttributes() > 0) {
-                Attribute attribute = trainingData.getExplanatoryAttribute(0);
-                System.out.println("ORDINAMENTO PER ATTRIBUTO: " + attribute.getName());
-                trainingData.sort(attribute, 0, trainingData.getNumberOfExamples() - 1);
-                System.out.println(trainingData);
-            }
-
-        } catch (TrainingDataException e) {
-            // Se "servo.dat" è inesistente o anomalo, il programma non crasherà
-            // ma entrerà qui dentro e stamperà l'errore in modo pulito
-            System.out.println("ERRORE DI ACQUISIZIONE DATI:");
-            System.out.println(e.getMessage());
-        }
-    }
+			for (int jColumn = 0; jColumn < trainingSet.getNumberOfExplanatoryAttributes(); jColumn++) {
+				System.out.println("ORDER BY " + trainingSet.getExplanatoryAttribute(jColumn));
+				trainingSet.quicksort(trainingSet.getExplanatoryAttribute(jColumn), 0,
+						trainingSet.getNumberOfExamples() - 1);
+				System.out.println(trainingSet);
+			}
+		} catch (TrainingDataException e) {
+			System.out.println(e);
+		}
+	}
 }

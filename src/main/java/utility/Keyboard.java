@@ -10,10 +10,19 @@ import java.util.*;
  */
 public class Keyboard {
 
+    /** Se true, i messaggi di errore di lettura vengono stampati su standard output. */
     private static boolean printErrors = true;
+
+    /** Numero di errori di lettura riscontrati finora. */
     private static int errorCount = 0;
+
+    /** Parte della riga corrente non ancora consumata dalle letture. */
     private static String current_token = null;
+
+    /** Tokenizer sulla riga corrente letta da tastiera. */
     private static StringTokenizer reader;
+
+    /** Lettore bufferizzato dello standard input. */
     private static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
     /**
