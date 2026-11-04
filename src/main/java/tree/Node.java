@@ -7,7 +7,7 @@ import data.Data;
 /**
  * Classe astratta che modella un generico nodo dell'albero di regressione.
  * Ogni nodo (interno o foglia) tiene traccia del sottoinsieme di esempi
- * che gli compete (range [beginExampleIndex, endExampleIndex] nella matrice Data)
+ * che gli compete (range [beginExampleIndex, endExampleIndex] nel training set Data)
  * e della varianza (SSE) di quel sottoinsieme rispetto all'attributo di classe.
  *
  * La varianza SSE è la misura di eterogeneità usata dall'algoritmo:
@@ -57,8 +57,8 @@ abstract class Node implements Serializable {
 		this.beginExampleIndex = beginExampleIndex;
 		this.endExampleIndex = endExampleIndex;
 
-		// Calcola SSE con la formula Σyi² - (Σyi)²/n
-		// Più efficiente di calcolare prima la media e poi la somma degli scarti
+		// Calcola SSE con la formula Σyi² - (Σyi)²/n, evitando di calcolare prima
+		// la media e poi la somma degli scarti.
 		int n = endExampleIndex - beginExampleIndex + 1;
 		double sum = 0;
 		double sumSq = 0;

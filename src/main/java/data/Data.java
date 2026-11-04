@@ -1,27 +1,33 @@
 package data;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import database.Example;
+import database.DbAccess;
+import database.DatabaseConnectionException;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Modella l'insieme degli esempi di training.
- * Il training set è memorizzato in una matrice (numero di esempi) x (numero di attributi):
- * le prime colonne contengono gli attributi indipendenti, l'ultima l'attributo di classe.
+ * Il training set contiene una lista di esempi, ciascuno con i valori degli attributi
+ * indipendenti seguiti dal valore dell'attributo di classe.
  *
- * Il formato del file di input è:
- *   @schema n                       numero di attributi indipendenti
- *   @desc nome v1,v2,...            un attributo indipendente discreto per riga
- *   @desc nome continuous           un attributo indipendente continuo per riga
- *   @target nome                    attributo di classe (numerico)
- *   @data m                         numero di esempi, seguito da una riga per esempio
+ * Lo schema e gli esempi vengono letti dalle colonne e dalle righe di una tabella
+ * del database. L'ultima colonna è l'attributo di classe e deve essere numerica.
  */
 public class Data {
 
-	/** Matrice che contiene il training set (esempi x attributi, classe nell'ultima colonna). */
-	private Object[][] data;
+	/** Esempi del training set, ciascuno con i valori ordinati come le colonne della tabella. */
+	private List<Example> data = new ArrayList<Example>();
 
 	/** Cardinalità del training set. */
 	private int numberOfExamples;
@@ -33,80 +39,104 @@ public class Data {
 	private ContinuousAttribute classAttribute;
 
 	/**
-	 * Costruttore: legge il file e popola schema degli attributi e matrice degli esempi.
-	 * Gli attributi indipendenti possono essere discreti o continui; i valori dei
-	 * secondi sono memorizzati come Double, quelli dei primi come String.
+	 * Carica lo schema e gli esempi di addestramento dalla tabella indicata.
+	 * Le colonne numeriche sono rappresentate da attributi continui; le altre
+	 * colonne indipendenti sono rappresentate da attributi discreti.
 	 *
-	 * @param fileName nome del file che contiene il training set
-	 * @throws TrainingDataException se il file è inesistente, lo schema è mancante,
-	 *                               il training set è vuoto o manca l'attributo target
+	 * @param tableName nome della tabella che contiene il training set
+	 * @throws TrainingDataException se la connessione fallisce, la tabella non esiste,
+	 *                               ha meno di due colonne o nessuna riga, oppure
+	 *                               l'ultima colonna non è numerica
 	 */
-	public Data(String fileName) throws TrainingDataException {
-		Scanner sc = null;
+	public Data(String tableName) throws TrainingDataException {
+		if (tableName == null || tableName.trim().isEmpty())
+			throw new TrainingDataException("Il nome della tabella non può essere vuoto");
+
+		DbAccess db = new DbAccess();
 		try {
-			sc = new Scanner(new File(fileName));
+			db.initConnection();
+			String query = "SELECT * FROM `" + tableName.replace("`", "``") + "`";
+			try (Connection connection = db.getConnection();
+					Statement statement = connection.createStatement();
+					ResultSet resultSet = statement.executeQuery(query)) {
+				ResultSetMetaData metadata = resultSet.getMetaData();
+				int columnCount = metadata.getColumnCount();
+				if (columnCount < 2)
+					throw new TrainingDataException("La tabella " + tableName + " deve avere almeno due colonne");
 
-			// Lettura dello schema: "@schema n" indica il numero di attributi indipendenti
-			if (!sc.hasNextLine())
-				throw new TrainingDataException("File vuoto: " + fileName);
-			String line = sc.nextLine();
-			if (!line.contains("@schema"))
-				throw new TrainingDataException("Schema mancante nel file: " + fileName);
-			String[] s = line.split(" ");
-			int explanatoryCount = Integer.parseInt(s[1]);
+				int classIndex = columnCount - 1;
+				boolean[] numericColumns = new boolean[columnCount];
+				String[] columnNames = new String[columnCount];
+				List<Set<String>> discreteDomains = new ArrayList<Set<String>>(columnCount);
+				for (int column = 0; column < columnCount; column++) {
+					numericColumns[column] = isNumericType(metadata.getColumnType(column + 1));
+					columnNames[column] = metadata.getColumnName(column + 1);
+					discreteDomains.add(numericColumns[column] ? null : new TreeSet<String>());
+				}
+				if (!numericColumns[classIndex])
+					throw new TrainingDataException("L'ultima colonna della tabella " + tableName + " deve essere numerica");
 
-			// Lettura delle dichiarazioni degli attributi, fino al marcatore "@data"
-			short iAttribute = 0;
-			line = sc.nextLine();
-			while (!line.contains("@data")) {
-				s = line.split(" ");
-				if (s[0].equals("@desc")) {
-					if (s[2].equals("continuous")) {
-						// Attributo continuo: @desc temperature continuous
-						explanatorySet.add(new ContinuousAttribute(s[1], iAttribute));
-					} else {
-						// Attributo discreto: @desc motor A,B,C,D,E (la parola "discrete" è opzionale)
-						String domain = s[2].equals("discrete") ? s[3] : s[2];
-						explanatorySet.add(new DiscreteAttribute(s[1], iAttribute, domain.split(",")));
+				while (resultSet.next()) {
+					Example example = new Example();
+					for (int column = 0; column < columnCount; column++) {
+						Object value = resultSet.getObject(column + 1);
+						if (value == null)
+							throw new TrainingDataException("Valore nullo nella colonna "
+									+ columnNames[column] + " della tabella " + tableName);
+
+						if (numericColumns[column]) {
+							if (!(value instanceof Number))
+								throw new TrainingDataException("Valore non numerico nella colonna "
+										+ columnNames[column] + " della tabella " + tableName);
+							example.add(((Number) value).doubleValue());
+						} else {
+							String discreteValue = value.toString();
+							example.add(discreteValue);
+							if (column < classIndex)
+								discreteDomains.get(column).add(discreteValue);
+						}
 					}
-				} else if (s[0].equals("@target")) {
-					classAttribute = new ContinuousAttribute(s[1], iAttribute);
+					data.add(example);
 				}
-				iAttribute++;
-				line = sc.nextLine();
-			}
-			if (classAttribute == null)
-				throw new TrainingDataException("Attributo target mancante nel file: " + fileName);
-			if (explanatorySet.size() != explanatoryCount)
-				throw new TrainingDataException("Schema incoerente con gli attributi dichiarati: " + fileName);
+				if (data.isEmpty())
+					throw new TrainingDataException("La tabella " + tableName + " non contiene tuple");
 
-			// Numero di esempi: @data 167
-			numberOfExamples = Integer.parseInt(line.split(" ")[1]);
-			if (numberOfExamples <= 0)
-				throw new TrainingDataException("Training set vuoto nel file: " + fileName);
-
-			// Popolamento della matrice: es. E,E,5,4,0.28125095
-			data = new Object[numberOfExamples][explanatorySet.size() + 1];
-			short iRow = 0;
-			while (sc.hasNextLine() && iRow < numberOfExamples) {
-				line = sc.nextLine();
-				s = line.split(",");
-				for (short jColumn = 0; jColumn < s.length - 1; jColumn++) {
-					if (explanatorySet.get(jColumn) instanceof ContinuousAttribute)
-						data[iRow][jColumn] = Double.valueOf(s[jColumn]);
+				for (int column = 0; column < classIndex; column++) {
+					if (numericColumns[column])
+						explanatorySet.add(new ContinuousAttribute(columnNames[column], column));
 					else
-						data[iRow][jColumn] = s[jColumn];
+						explanatorySet.add(new DiscreteAttribute(columnNames[column], column,
+								discreteDomains.get(column).toArray(new String[0])));
 				}
-				data[iRow][s.length - 1] = Double.valueOf(s[s.length - 1]);
-				iRow++;
+				classAttribute = new ContinuousAttribute(columnNames[classIndex], classIndex);
+				numberOfExamples = data.size();
 			}
-		} catch (FileNotFoundException e) {
-			throw new TrainingDataException("Impossibile aprire il file del training set: " + fileName, e);
-		} catch (java.util.NoSuchElementException | NumberFormatException | ArrayIndexOutOfBoundsException e) {
-			throw new TrainingDataException("Formato del training set non valido: " + fileName, e);
-		} finally {
-			if (sc != null)
-				sc.close();
+		} catch (DatabaseConnectionException | SQLException e) {
+			throw new TrainingDataException("Impossibile caricare il training set dalla tabella "
+					+ tableName, e);
+		}
+	}
+
+	/**
+	 * Verifica se un tipo SQL rappresenta un valore numerico supportato.
+	 *
+	 * @param sqlType tipo JDBC restituito dai metadati della colonna
+	 * @return {@code true} se il tipo è numerico, {@code false} altrimenti
+	 */
+	private boolean isNumericType(int sqlType) {
+		switch (sqlType) {
+		case Types.TINYINT:
+		case Types.SMALLINT:
+		case Types.INTEGER:
+		case Types.BIGINT:
+		case Types.FLOAT:
+		case Types.REAL:
+		case Types.DOUBLE:
+		case Types.NUMERIC:
+		case Types.DECIMAL:
+			return true;
+		default:
+			return false;
 		}
 	}
 
@@ -121,8 +151,8 @@ public class Data {
 
 	/**
 	 * Restituisce il numero di attributi indipendenti (esplicativi).
-	 * Corrisponde alla cardinalità di explanatorySet ed è l'indice di colonna
-	 * dell'attributo di classe in data[][].
+	 * Corrisponde alla cardinalità di explanatorySet ed è la posizione
+	 * dell'attributo di classe in ciascun esempio.
 	 *
 	 * @return numero di attributi indipendenti
 	 */
@@ -132,25 +162,25 @@ public class Data {
 
 	/**
 	 * Restituisce il valore dell'attributo di classe per un esempio.
-	 * Il valore è memorizzato nell'ultima colonna di data[][].
+	 * Il valore è memorizzato dopo gli attributi indipendenti in ciascun esempio.
 	 *
-	 * @param exampleIndex indice dell'esempio (riga di data[][])
+	 * @param exampleIndex indice dell'esempio
 	 * @return valore Double dell'attributo di classe
 	 */
 	public Double getClassValue(int exampleIndex) {
-		return (Double) data[exampleIndex][explanatorySet.size()];
+		return (Double) data.get(exampleIndex).get(explanatorySet.size());
 	}
 
 	/**
 	 * Restituisce il valore di un attributo indipendente per un dato esempio.
-	 * L'indice dell'attributo coincide con l'indice di colonna in data[][].
+	 * L'indice dell'attributo coincide con la posizione del valore nell'esempio.
 	 *
-	 * @param exampleIndex   indice dell'esempio (riga di data[][])
-	 * @param attributeIndex indice dell'attributo indipendente (colonna di data[][])
+	 * @param exampleIndex   indice dell'esempio
+	 * @param attributeIndex indice dell'attributo indipendente
 	 * @return valore dell'attributo (String se discreto, Double se continuo)
 	 */
 	public Object getExplanatoryValue(int exampleIndex, int attributeIndex) {
-		return data[exampleIndex][attributeIndex];
+		return data.get(exampleIndex).get(attributeIndex);
 	}
 
 	/**
@@ -183,8 +213,8 @@ public class Data {
 		StringBuilder value = new StringBuilder();
 		for (int i = 0; i < numberOfExamples; i++) {
 			for (int j = 0; j < explanatorySet.size(); j++)
-				value.append(data[i][j]).append(",");
-			value.append(data[i][explanatorySet.size()]).append("\n");
+				value.append(data.get(i).get(j)).append(",");
+			value.append(data.get(i).get(explanatorySet.size())).append("\n");
 		}
 		return value.toString();
 	}
@@ -209,12 +239,9 @@ public class Data {
 	 * @param j indice del secondo esempio
 	 */
 	private void swap(int i, int j) {
-		Object temp;
-		for (int k = 0; k < getNumberOfExplanatoryAttributes() + 1; k++) {
-			temp = data[i][k];
-			data[i][k] = data[j][k];
-			data[j][k] = temp;
-		}
+		Example temp = data.get(i);
+		data.set(i, data.get(j));
+		data.set(j, temp);
 	}
 
 	/**
@@ -308,14 +335,14 @@ public class Data {
 	}
 
 	/**
-	 * Punto di ingresso di prova: carica servo.dat e ne stampa il contenuto
+	 * Punto di ingresso di prova: carica la tabella servo e ne stampa il contenuto
 	 * ordinato rispetto a ciascun attributo indipendente.
 	 *
 	 * @param args argomenti da riga di comando (non utilizzati)
 	 */
 	public static void main(String[] args) {
 		try {
-			Data trainingSet = new Data("servo.dat");
+			Data trainingSet = new Data("servo");
 			System.out.println(trainingSet);
 
 			for (int jColumn = 0; jColumn < trainingSet.getNumberOfExplanatoryAttributes(); jColumn++) {
