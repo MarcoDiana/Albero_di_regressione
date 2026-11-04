@@ -167,7 +167,7 @@ abstract class SplitNode extends Node implements Comparable<SplitNode> {
 	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
 	 * @param attribute         attributo su cui si sta effettuando lo split
 	 */
-	protected abstract void setSplitInfo(Data trainingSet, int beginExampelIndex, int endExampleIndex,
+	protected abstract void setSplitInfo(Data trainingSet, int beginExampleIndex, int endExampleIndex,
 			Attribute attribute);
 
 	/**
