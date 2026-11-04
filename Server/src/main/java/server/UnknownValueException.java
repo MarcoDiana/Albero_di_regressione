@@ -1,4 +1,4 @@
-package tree;
+package server;
 
 /**
  * Eccezione sollevata durante la predizione di un nuovo esempio quando
