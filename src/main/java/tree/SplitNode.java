@@ -163,7 +163,7 @@ abstract class SplitNode extends Node implements Comparable<SplitNode> {
 	 * Implementato diversamente per attributi discreti e continui.
 	 *
 	 * @param trainingSet       training set (già ordinato per l'attributo nel range)
-	 * @param beginExampelIndex primo indice del sottoinsieme (incluso)
+	 * @param beginExampleIndex primo indice del sottoinsieme (incluso)
 	 * @param endExampleIndex   ultimo indice del sottoinsieme (incluso)
 	 * @param attribute         attributo su cui si sta effettuando lo split
 	 */

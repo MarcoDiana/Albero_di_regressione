@@ -57,6 +57,15 @@ public class DbAccess {
     }
 
     /**
+     * Restituisce la connessione JDBC corrente.
+     *
+     * @return la connessione, oppure {@code null} se non è stata inizializzata
+     */
+    public Connection getConnection() {
+        return conn;
+    }
+
+    /**
      * Chiude la connessione JDBC, se è stata inizializzata.
      *
      * @throws DatabaseConnectionException se si verifica un errore durante la chiusura

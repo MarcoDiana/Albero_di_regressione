@@ -1,9 +1,9 @@
 package data;
 
 /**
- * Eccezione sollevata in caso di acquisizione errata del training set.
- * Copre i casi di file inesistente o non leggibile, schema mancante,
- * training set vuoto e training set privo di variabile target numerica.
+ * Eccezione sollevata quando non è possibile caricare correttamente il training
+ * set dal database, per esempio per errori di connessione, schema non valido,
+ * tabella vuota o attributo target non numerico.
  */
 public class TrainingDataException extends Exception {
 
@@ -17,8 +17,8 @@ public class TrainingDataException extends Exception {
 	}
 
 	/**
-	 * Costruttore: crea l'eccezione incapsulando la causa originaria
-	 * (es. FileNotFoundException), in modo da non perderne lo stack trace.
+	 * Crea l'eccezione incapsulando la causa originaria, in modo da conservarne
+	 * lo stack trace.
 	 *
 	 * @param message descrizione del problema riscontrato durante l'acquisizione
 	 * @param cause   eccezione che ha originato l'errore

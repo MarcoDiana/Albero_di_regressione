@@ -49,10 +49,6 @@ public class RegressionTree implements Serializable {
 	 */
 	private RegressionTree[] childTree;
 
-	// -------------------------------------------------------------------------
-	// Costruttori
-	// -------------------------------------------------------------------------
-
 	/**
 	 * Costruttore senza argomenti: crea un albero vuoto.
 	 * Usato internamente da learnTree() per istanziare i sotto-alberi figli
@@ -71,10 +67,6 @@ public class RegressionTree implements Serializable {
 		learnTree(trainingSet, 0, trainingSet.getNumberOfExamples() - 1,
 				trainingSet.getNumberOfExamples() * 10 / 100);
 	}
-
-	// -------------------------------------------------------------------------
-	// Algoritmo di apprendimento
-	// -------------------------------------------------------------------------
 
 	/**
 	 * Costruisce ricorsivamente l'albero sul sottoinsieme [begin, end] del training set.
@@ -170,10 +162,6 @@ public class RegressionTree implements Serializable {
 		return bestNode;
 	}
 
-	// -------------------------------------------------------------------------
-	// Stampa delle regole
-	// -------------------------------------------------------------------------
-
 	/**
 	 * Stampa tutte le regole IF-THEN estratte dall'albero.
 	 * Ogni percorso dalla radice a una foglia corrisponde a una regola:
@@ -220,10 +208,6 @@ public class RegressionTree implements Serializable {
 		}
 	}
 
-	// -------------------------------------------------------------------------
-	// Stampa dell'albero (forniti dal docente, con commenti aggiunti)
-	// -------------------------------------------------------------------------
-
 	/**
 	 * Stampa la struttura completa dell'albero con intestazione e piè di pagina.
 	 */
@@ -254,10 +238,6 @@ public class RegressionTree implements Serializable {
 		return tree;
 	}
 
-	// -------------------------------------------------------------------------
-	// Predizione di nuovi esempi
-	// -------------------------------------------------------------------------
-
 	/**
 	 * Predice il valore di classe di un nuovo esempio acquisito da tastiera.
 	 *
@@ -280,10 +260,6 @@ public class RegressionTree implements Serializable {
 			return childTree[risp].predictClass();
 		}
 	}
-
-	// -------------------------------------------------------------------------
-	// Persistenza
-	// -------------------------------------------------------------------------
 
 	/**
 	 * Serializza l'albero (con i nodi e gli attributi che lo compongono) in un file.
