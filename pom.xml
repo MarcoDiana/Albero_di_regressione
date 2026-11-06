@@ -60,5 +60,20 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
+                <configuration>
+                    <show>private</show>
+                    <doclint>none</doclint>
+                    <charset>UTF-8</charset>
+                    <docencoding>UTF-8</docencoding>
+                    <encoding>UTF-8</encoding>
+                    <outputDirectory>${project.basedir}/docs/javadoc</outputDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
