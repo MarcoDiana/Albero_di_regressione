@@ -8,7 +8,7 @@ import java.net.ServerSocket;
  */
 public class MultiServer {
     /** Porta sulla quale il server accetta le connessioni. */
-    private final int port;
+    private int PORT = 8080;
 
     /**
      * Crea il server sulla porta specificata e avvia l'ascolto delle connessioni.
@@ -16,7 +16,7 @@ public class MultiServer {
      * @param port porta sulla quale accettare le connessioni
      */
     public MultiServer(int port) {
-        this.port = port;
+        this.PORT = port;
         run();
     }
 
@@ -25,8 +25,8 @@ public class MultiServer {
      * Il server socket viene chiuso se l'ascolto termina a causa di un errore.
      */
     private void run() {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server is listening on port " + port);
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server is listening on port " + PORT);
 
             while (true) {
                 new ServerOneClient(serverSocket.accept());
