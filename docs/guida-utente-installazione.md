@@ -202,10 +202,10 @@ Per verificare istantaneamente che l'ambiente sia pronto, che il database MySQL 
 mvn clean test
 ```
 
-L'output confermerà l'esecuzione con successo di **60 test** (16 nel modulo Client e 44 nel modulo Server) con **0 fallimenti e 0 errori**:
+L'output confermerà l'esecuzione con successo di **64 test** (20 nel modulo Client e 44 nel modulo Server) con **0 fallimenti e 0 errori**:
 ```text
 [INFO] Results:
-[INFO] Tests run: 60, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 64, Failures: 0, Errors: 0, Skipped: 0
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 ```

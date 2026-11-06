@@ -85,6 +85,10 @@ La suite è integrata nel ciclo di vita Maven attraverso il plugin `maven-surefi
 | **REQ-CLIENT-07** | `Client` | `Client` | `TreeMermaidConverterTest` | `testSingleLeafTree` | Gestione albero degenere a foglia singola (senza split) | Unit Test |
 | **REQ-CLIENT-08** | `Client` | `Client` | `TreeMermaidConverterTest` | `testEmptyOrNullInput` | Resilienza a input nulli o vuoti con fallback a grafo vuoto | Unit Test |
 | **REQ-CLIENT-09** | `Client` | `Client` | `TreeMermaidConverterTest` | `testExtractCleanRules` | Estrazione lista regole IF-THEN formattate per rendering a card | Unit Test |
+| **REQ-CLIENT-10** | `Client` | `Client` | `BrowserLauncherTest` | `testConfigurationGettersSetters` | Configurazione porta e flag di auto-apertura del browser | Unit Test |
+| **REQ-CLIENT-11** | `Client` | `Client` | `BrowserLauncherTest` | `testInvalidUrls` | Resilienza a parametri URL nulli, vuoti o non validi | Unit Test |
+| **REQ-CLIENT-12** | `Client` | `Client` | `BrowserLauncherTest` | `testDisabledAutoOpen` | Gestione disabilitazione apertura su `ApplicationReadyEvent` | Unit Test |
+| **REQ-CLIENT-13** | `Client` | `Client` | `BrowserLauncherTest` | `testLaunchViaCommandSimulation` | Fallback multipiattaforma comandi nativi (Windows/macOS/Linux) | Unit Test |
 
 ---
 
@@ -226,5 +230,5 @@ Tutti i test inclusi nella suite vengono eseguiti con successo senza alcun falli
 | **Root** | Aggregatore POM | 0 | SUCCESS | ~0.2 s |
 | **Client** | `KeyboardTest`, `TreeRestClientServiceTest`, `TreeMermaidConverterTest` | 16 | SUCCESS (0 Failures, 0 Errors) | ~1.3 s |
 | **Server** | `AttributeTest`, `DataTest`, `DatabasePackageTest`, `TreeNodesAndAlgorithmTest`, `SocketClientServerIntegrationTest`, `EndToEndRestAndClientIntegrationTest` | 44 | SUCCESS (0 Failures, 0 Errors) | ~16.5 s |
-| **Totale Progetto** | **8 Classi di Test** | **60** | **100% PASS** | **~18 s** |
+| **Totale Progetto** | **9 Classi di Test** | **64** | **100% PASS** | **~18 s** |
 

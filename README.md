@@ -6,7 +6,7 @@
 [![Vaadin](https://img.shields.io/badge/Vaadin%20Flow-24.6.4-00b4f0.svg)](https://vaadin.com/)
 [![OpenAPI / Swagger](https://img.shields.io/badge/OpenAPI%203-Swagger%20UI-85ea2d.svg)](http://localhost:8080/swagger-ui.html)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0%20%7C%208.4-00758F.svg)](https://www.mysql.com/)
-[![JUnit 5](https://img.shields.io/badge/JUnit%205-60%20Passed-success.svg)](docs/documentazione-test.md)
+[![JUnit 5](https://img.shields.io/badge/JUnit%205-64%20Passed-success.svg)](docs/documentazione-test.md)
 [![Javadoc](https://img.shields.io/badge/Javadoc-Aggregate%20(Private)-brightgreen.svg)](docs/javadoc/index.html)
 
 Sistema distribuito in Java per l'apprendimento induttivo, la serializzazione binaria e la predizione supervisionata mediante **Alberi di Regressione** (Regression Trees). Il sistema integra un'architettura duale:
@@ -92,7 +92,7 @@ L'intera documentazione tecnica e operativa del progetto è disponibile sia in f
 |---|---|:---:|:---:|
 | **Guida Tecnica Completa** | Architettura three-tier, formulazione matematica $SSE$, quicksort in-place, split discreti/continui, protocollo socket, REST API e Vaadin. | [docs/guida-tecnica.md](docs/guida-tecnica.md) | [docs/pdf/guida-tecnica.pdf](docs/pdf/guida-tecnica.pdf) |
 | **Guida Utente e Installazione** | Script SQL `MapDB`, credenziali `MapUser`/`map`, uso interfaccia Web Vaadin Flow, Swagger UI ed esecuzione CLI. | [docs/guida-utente-installazione.md](docs/guida-utente-installazione.md) | [docs/pdf/guida-utente-installazione.pdf](docs/pdf/guida-utente-installazione.pdf) |
-| **Documentazione della Suite di Test** | Matrice di tracciabilità requisiti, 60 test automatizzati (JUnit 5, Mockito, Spring Boot Test E2E, RestClient) a 0 errori. | [docs/documentazione-test.md](docs/documentazione-test.md) | [docs/pdf/documentazione-test.pdf](docs/pdf/documentazione-test.pdf) |
+| **Documentazione della Suite di Test** | Matrice di tracciabilità requisiti, 64 test automatizzati (JUnit 5, Mockito, Spring Boot Test E2E, RestClient) a 0 errori. | [docs/documentazione-test.md](docs/documentazione-test.md) | [docs/pdf/documentazione-test.pdf](docs/pdf/documentazione-test.pdf) |
 | **Diagrammi UML e Architettura dei Package** | Raccolta completa e visuale di tutti i diagrammi UML del sistema (Package, Classi per ogni package, Sequenza e Deployment). | [docs/architettura-uml-oop.md](docs/architettura-uml-oop.md) | [docs/pdf/architettura-uml-oop.pdf](docs/pdf/architettura-uml-oop.pdf) |
 | **Documentazione Javadoc** | Documentazione API completa di tutti i package (inclusi metodi e campi privati). | [docs/javadoc/index.html](docs/javadoc/index.html) | — |
 | **README di Progetto** | Panoramica sintetica, architettura, badge, comandi di build e avvio. | [README.md](README.md) | [docs/pdf/README.pdf](docs/pdf/README.pdf) |
@@ -174,7 +174,7 @@ mvn compile exec:java -Dexec.mainClass="Client.Main"
 
 ### 5. Esecuzione dei Test Automatizzati
 
-Esecuzione dell'intera suite (55 test unitari, d'integrazione, socket ed end-to-end):
+Esecuzione dell'intera suite (64 test unitari, d'integrazione, socket ed end-to-end):
 
 ```bash
 mvn clean test
@@ -205,7 +205,7 @@ Le versioni ad alta definizione pronte per la stampa e la consultazione offline 
 │   │   ├── Client/                     # ClientApplication.java, Main.java, MainView.java, TreeRestClientService.java
 │   │   ├── dto/                        # Record DTO immutabili per REST
 │   │   └── utility/                    # Keyboard.java (input da console)
-│   └── src/test/java/                  # Suite di test modulo Client (16 test)
+│   └── src/test/java/                  # Suite di test modulo Client (20 test)
 ├── Server/                             # Modulo Server (Socket TCP + Backend REST API)
 │   ├── pom.xml                         # Dipendenze (Spring Boot, MySQL Connector 8.4.0, OpenAPI)
 │   ├── src/main/java/
