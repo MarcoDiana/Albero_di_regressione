@@ -21,8 +21,14 @@ import java.util.List;
  * Le sottoclassi concrete (es. DiscreteNode) implementano:
  * - setSplitInfo(): come ricavare le partizioni per uno specifico tipo di attributo
  * - testCondition(): su quale ramo instradare un nuovo esempio
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 abstract class SplitNode extends Node implements Comparable<SplitNode> {
+
+    /** Identificativo di versione per la serializzazione. */
+    private static final long serialVersionUID = 1L;
 
     /**
      * Classe interna che raccoglie le informazioni descrittive di una singola

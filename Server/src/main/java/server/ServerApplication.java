@@ -10,10 +10,19 @@ import org.springframework.context.annotation.Import;
  * Configura la scansione dei componenti Spring, inizializza il server embedded
  * Tomcat sulla porta 8080 ed espone la documentazione interattiva OpenAPI / Swagger UI
  * all'indirizzo {@code http://localhost:8080/swagger-ui.html}.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 @SpringBootApplication(scanBasePackages = {"server", "tree", "data", "database", "dto"})
 @Import({TreeService.class, TreeController.class, GlobalExceptionHandler.class})
 public class ServerApplication {
+
+    /**
+     * Costruttore predefinito dell'applicazione Spring Boot Server.
+     */
+    public ServerApplication() {
+    }
 
     /**
      * Metodo di avvio dell'applicazione Spring Boot.

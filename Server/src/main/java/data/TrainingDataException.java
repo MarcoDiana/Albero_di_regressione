@@ -4,8 +4,14 @@ package data;
  * Eccezione sollevata quando non è possibile caricare correttamente il training
  * set dal database, per esempio per errori di connessione, schema non valido,
  * tabella vuota o attributo target non numerico.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class TrainingDataException extends Exception {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Costruttore: crea l'eccezione con un messaggio descrittivo dell'errore.

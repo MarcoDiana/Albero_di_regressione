@@ -16,9 +16,18 @@ import java.util.Map;
  * Gestore globale centralizzato delle eccezioni per le API REST.
  * Converte le eccezioni sollevate dai controller e dai servizi in risposte
  * HTTP semantiche con payload JSON strutturato {@code {"error": "..."}}.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * Costruttore predefinito del gestore globale delle eccezioni.
+     */
+    public GlobalExceptionHandler() {
+    }
 
     /**
      * Gestisce la mancata individuazione di un file serializzato su disco (404 Not Found).

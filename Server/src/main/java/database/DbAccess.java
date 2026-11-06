@@ -6,23 +6,26 @@ import java.sql.SQLException;
 
 /**
  * Gestisce la connessione al database e ne fornisce l'accesso.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class DbAccess {
 
     /** Nome della classe del driver JDBC MySQL. */
-    private final String DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
+    private static final String DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
 
     /** Schema JDBC usato per costruire l'URL di connessione. */
-    private final String DBMS = "jdbc:mysql";
+    private static final String DBMS = "jdbc:mysql";
+
+    /** Porta su cui il DBMS MySQL accetta le connessioni. */
+    private static final int PORT = 3306;
 
     /** Indirizzo del server del database. */
     private String SERVER = "localhost";
 
     /** Nome del database a cui connettersi. */
     private String DATABASE = "MapDB";
-
-    /** Porta su cui il DBMS MySQL accetta le connessioni. */
-    private final int PORT = 3306;
 
     /** Nome dell'utente per l'accesso alla base di dati. */
     private String USER_ID = "MapUser";
@@ -32,6 +35,12 @@ public class DbAccess {
 
     /** Connessione JDBC attiva, se inizializzata. */
     private Connection conn;
+
+    /**
+     * Costruttore predefinito: inizializza l'accesso al database con i parametri configurati.
+     */
+    public DbAccess() {
+    }
 
     /**
      * Carica il driver JDBC e apre la connessione al database configurato.

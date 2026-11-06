@@ -2,8 +2,14 @@ package database;
 
 /**
  * Segnala che una tabella o una raccolta di dati non contiene elementi.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class EmptySetException extends Exception {
+
+    /** Identificativo di versione per la serializzazione. */
+    private static final long serialVersionUID = 1L;
 
     /**
      * Crea l'eccezione con un messaggio descrittivo.

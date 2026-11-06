@@ -11,6 +11,9 @@ import tree.RegressionTree;
 
 /**
  * Gestisce lo scambio di oggetti con un singolo client in un thread dedicato.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class ServerOneClient extends Thread {
     /** Socket connesso al client. */

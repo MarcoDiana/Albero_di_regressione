@@ -21,6 +21,9 @@ import java.util.Map;
 /**
  * Controller REST che espone le API per l'apprendimento, il caricamento
  * e la predizione tramite Albero di Regressione.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 @RestController
 @RequestMapping("/api/trees")

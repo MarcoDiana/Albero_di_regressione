@@ -12,8 +12,14 @@ import data.Data;
  *   - ramo 1: esempi con valore &gt; soglia
  *
  * La soglia scelta è quella che minimizza la somma degli SSE dei due rami.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 class ContinuousNode extends SplitNode {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Costruttore: delega a SplitNode, che ordina i dati per l'attributo,

@@ -2,8 +2,12 @@ package database;
 
 /**
  * Descrive una colonna di una tabella e indica se contiene valori numerici.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
-public class Column{
+public class Column {
+
 	/** Nome della colonna nel database. */
 	private String name;
 
@@ -11,14 +15,15 @@ public class Column{
 	private String type;
 
 	/**
-	 * Crea la descrizione di una colonna.
+	 * Crea la descrizione di una colonna con visibilità di package,
+	 * in quanto l'istanziazione è riservata al componente {@link TableSchema}.
 	 *
 	 * @param name nome della colonna
 	 * @param type categoria del tipo di colonna
 	 */
-	Column(String name,String type){
-		this.name=name;
-		this.type=type;
+	Column(String name, String type) {
+		this.name = name;
+		this.type = type;
 	}
 
 	/**
@@ -26,7 +31,7 @@ public class Column{
 	 *
 	 * @return nome della colonna
 	 */
-	public String getColumnName(){
+	public String getColumnName() {
 		return name;
 	}
 
@@ -35,7 +40,7 @@ public class Column{
 	 *
 	 * @return {@code true} se la colonna è numerica
 	 */
-	public boolean isNumber(){
+	public boolean isNumber() {
 		return type.equals("number");
 	}
 
@@ -44,7 +49,8 @@ public class Column{
 	 *
 	 * @return descrizione nel formato {@code nome:tipo}
 	 */
-	public String toString(){
-		return name+":"+type;
+	@Override
+	public String toString() {
+		return name + ":" + type;
 	}
 }

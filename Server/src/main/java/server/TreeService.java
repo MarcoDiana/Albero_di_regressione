@@ -19,12 +19,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * Mantiene una cache thread-safe in memoria degli alberi attivi e fornisce i metodi
  * per l'apprendimento da database MySQL, il caricamento/salvataggio su file {@code .dmp}
  * e la navigazione stateless per la predizione.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 @Service
 public class TreeService {
 
     /** Cache concorrente che associa il nome della tabella o del modello all'albero appreso. */
     private final Map<String, RegressionTree> activeTrees = new ConcurrentHashMap<>();
+
+    /**
+     * Costruttore predefinito del servizio di gestione alberi.
+     */
+    public TreeService() {
+    }
 
     /**
      * Apprende un albero di regressione dalla tabella indicata su database MySQL,

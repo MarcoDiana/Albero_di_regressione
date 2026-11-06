@@ -5,10 +5,14 @@ import java.net.ServerSocket;
 
 /**
  * Server TCP che accetta connessioni e avvia un gestore per ogni client.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class MultiServer {
+
     /** Porta sulla quale il server accetta le connessioni. */
-    private int PORT = 8080;
+    private final int port;
 
     /**
      * Crea il server sulla porta specificata e avvia l'ascolto delle connessioni.
@@ -16,7 +20,7 @@ public class MultiServer {
      * @param port porta sulla quale accettare le connessioni
      */
     public MultiServer(int port) {
-        this.PORT = port;
+        this.port = port;
         run();
     }
 
@@ -25,8 +29,8 @@ public class MultiServer {
      * Il server socket viene chiuso se l'ascolto termina a causa di un errore.
      */
     private void run() {
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server is listening on port " + PORT);
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server is listening on port " + port);
 
             while (true) {
                 new ServerOneClient(serverSocket.accept());

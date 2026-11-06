@@ -11,8 +11,14 @@ import data.Data;
  * degli esempi nel range [beginExampleIndex, endExampleIndex].
  * Questa è la scelta ottimale (minimizza MSE locale) quando non si può
  * o non conviene splittare ulteriormente il sottoinsieme.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 class LeafNode extends Node {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Valore di classe predetto per gli esempi che ricadono in questo nodo.

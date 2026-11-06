@@ -13,6 +13,9 @@ import data.Data;
  * La varianza SSE è la misura di eterogeneità usata dall'algoritmo:
  *   SSE(S) = Σ(yi - ȳ)² = Σyi² - (Σyi)²/|S|
  * Un nodo con SSE=0 contiene esempi con identico valore di classe → foglia ideale.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 abstract class Node implements Serializable {
 

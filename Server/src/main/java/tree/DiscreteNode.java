@@ -12,8 +12,14 @@ import data.DiscreteAttribute;
  *
  * Esempio con attributo "motor" (valori A,B,C,D,E):
  *   se nel range corrente compaiono solo A e B, lo split produce 2 figli.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 class DiscreteNode extends SplitNode {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Costruttore: delega a SplitNode, che ordina i dati per l'attributo,

@@ -1,14 +1,24 @@
 package utility;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
 
 /**
  * La classe Keyboard facilita l'acquisizione di input da Standard Input (tastiera)
  * astraendo i dettagli relativi al parsing, alle conversioni di tipo
  * e alla gestione delle eccezioni di I/O.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class Keyboard {
+
+    /**
+     * Costruttore privato per prevenire l'istanziazione di questa classe di utilità.
+     */
+    private Keyboard() {
+    }
 
     /** Se true, i messaggi di errore di lettura vengono stampati su standard output. */
     private static boolean printErrors = true;
@@ -192,9 +202,9 @@ public class Keyboard {
         String token = getNextToken();
         boolean bool;
         try {
-            if (token.toLowerCase().equals("true"))
+            if (token.equalsIgnoreCase("true"))
                 bool = true;
-            else if (token.toLowerCase().equals("false"))
+            else if (token.equalsIgnoreCase("false"))
                 bool = false;
             else {
                 error("Error reading boolean data, false value returned.");
@@ -276,8 +286,7 @@ public class Keyboard {
         String token = getNextToken();
         float value;
         try {
-            // "new Float(token)" deprecato in Java recenti, ma mantenuto per aderenza alla logica originale
-            value = (new Float(token)).floatValue();
+            value = Float.parseFloat(token);
         } catch (Exception exception) {
             error("Error reading float data, NaN value returned.");
             value = Float.NaN;
@@ -295,7 +304,7 @@ public class Keyboard {
         String token = getNextToken();
         double value;
         try {
-            value = (new Double(token)).doubleValue();
+            value = Double.parseDouble(token);
         } catch (Exception exception) {
             error("Error reading double data, NaN value returned.");
             value = Double.NaN;

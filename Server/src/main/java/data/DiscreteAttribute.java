@@ -13,8 +13,14 @@ import java.util.TreeSet;
  * Esempio (da servo.dat):
  *   motor con valori {A, B, C, D, E}
  *   pgain con valori {3, 4, 5, 6}
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class DiscreteAttribute extends Attribute implements Iterable<String> {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/** Insieme ordinato dei valori distinti che l'attributo può assumere. */
 	private Set<String> values = new TreeSet<String>();

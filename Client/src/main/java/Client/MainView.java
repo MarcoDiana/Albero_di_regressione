@@ -30,6 +30,9 @@ import java.util.Locale;
  * Consente l'apprendimento da database MySQL, il caricamento da file serializzato {@code .dmp},
  * la visualizzazione a video delle regole estratte e l'esecuzione interattiva della predizione
  * guidata lungo i rami dell'albero.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 @Route("")
 public class MainView extends VerticalLayout {
@@ -43,11 +46,19 @@ public class MainView extends VerticalLayout {
     /** Sequenza degli indici dei rami scelti finora partendo dalla radice. */
     private final List<Integer> currentPath = new ArrayList<>();
 
-    /* Componenti UI */
+    /** Campo di testo per l'immissione del nome della tabella di database o del file archivio {@code .dmp}. */
     private final TextField tableNameField = new TextField("Tabella / File archivio:");
+
+    /** Pulsante per avviare l'induzione dell'albero dal database MySQL. */
     private final Button learnBtn = new Button("Apprendi da DB", new Icon(VaadinIcon.DATABASE));
+
+    /** Pulsante per avviare il caricamento dell'albero serializzato da file {@code .dmp}. */
     private final Button loadBtn = new Button("Carica da File (.dmp)", new Icon(VaadinIcon.FILE_TEXT));
+
+    /** Area di testo per la visualizzazione delle regole IF-THEN e della struttura dell'albero. */
     private final TextArea rulesArea = new TextArea("Struttura dell'Albero e Regole IF-THEN:");
+
+    /** Contenitore verticale per il rendering dinamico dei passi di predizione guidata. */
     private final VerticalLayout stepContainer = new VerticalLayout();
 
     /**

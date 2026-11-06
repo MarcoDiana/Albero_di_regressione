@@ -23,6 +23,9 @@ import java.util.TreeSet;
  *
  * Lo schema e gli esempi vengono letti dalle colonne e dalle righe di una tabella
  * del database. L'ultima colonna è l'attributo di classe e deve essere numerica.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class Data {
 

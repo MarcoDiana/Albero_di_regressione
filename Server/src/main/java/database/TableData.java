@@ -13,6 +13,9 @@ import java.util.TreeSet;
 
 /**
  * Recupera le tuple e i valori delle colonne di una tabella del database.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class TableData {
 

@@ -4,21 +4,29 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
-
 /**
  * Rappresenta una tupla di valori letta da una tabella del database.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
-public class Example implements Comparable<Example>, Iterable<Object>{
+public class Example implements Comparable<Example>, Iterable<Object> {
+
 	/** Valori della tupla nell'ordine delle colonne della tabella. */
-	private List<Object> example=new ArrayList<Object>();
+	private List<Object> example = new ArrayList<Object>();
+
+	/**
+	 * Costruttore predefinito: inizializza una tupla di valori vuota.
+	 */
+	public Example() {
+	}
 
 	/**
 	 * Aggiunge un valore alla fine della tupla.
 	 *
 	 * @param o valore da aggiungere
 	 */
-	public void add(Object o){
+	public void add(Object o) {
 		example.add(o);
 	}
 	
@@ -28,7 +36,7 @@ public class Example implements Comparable<Example>, Iterable<Object>{
 	 * @param i indice del valore nella tupla
 	 * @return valore corrispondente
 	 */
-	public Object get(int i){
+	public Object get(int i) {
 		return example.get(i);
 	}
 
@@ -38,12 +46,13 @@ public class Example implements Comparable<Example>, Iterable<Object>{
 	 * @param ex tupla da confrontare
 	 * @return un valore negativo, zero o positivo secondo l'ordine lessicografico
 	 */
+	@Override
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public int compareTo(Example ex) {
-		
-		int i=0;
-		for(Object o:ex.example){
-			if(!o.equals(this.example.get(i)))
-				return ((Comparable)o).compareTo(example.get(i));
+		int i = 0;
+		for (Object o : ex.example) {
+			if (!o.equals(this.example.get(i)))
+				return ((Comparable) o).compareTo(example.get(i));
 			i++;
 		}
 		return 0;
@@ -54,11 +63,12 @@ public class Example implements Comparable<Example>, Iterable<Object>{
 	 *
 	 * @return rappresentazione testuale della tupla
 	 */
-	public String toString(){
-		String str="";
-		for(Object o:example)
-			str+=o.toString()+ " ";
-		return str;
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		for (Object o : example)
+			str.append(o.toString()).append(" ");
+		return str.toString();
 	}
 
 	/**
@@ -70,5 +80,4 @@ public class Example implements Comparable<Example>, Iterable<Object>{
 	public Iterator<Object> iterator() {
 		return example.iterator();
 	}
-	
 }

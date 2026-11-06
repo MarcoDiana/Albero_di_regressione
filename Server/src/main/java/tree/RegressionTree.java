@@ -33,6 +33,9 @@ import java.util.TreeSet;
  * <p>
  * Criterio di split: minimizzazione della varianza totale (somma degli SSE dei figli).
  * Soglia di stop: il sottoinsieme ha al più il 10% degli esempi del training set.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class RegressionTree implements Serializable {
 

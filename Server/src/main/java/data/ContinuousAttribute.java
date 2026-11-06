@@ -7,8 +7,14 @@ package data;
  *
  * È usato per l'attributo di classe (target), che è il valore numerico da predire,
  * e per gli attributi indipendenti numerici, che originano nodi di split continui.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class ContinuousAttribute extends Attribute {
+
+	/** Identificativo di versione per la serializzazione. */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Costruttore: invoca il costruttore della superclasse.

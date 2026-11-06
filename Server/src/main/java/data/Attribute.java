@@ -10,6 +10,9 @@ import java.io.Serializable;
  *
  * Implementa Serializable perché gli attributi sono referenziati dai nodi di split
  * e devono quindi essere salvati insieme all'albero di regressione.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public abstract class Attribute implements Serializable {
 

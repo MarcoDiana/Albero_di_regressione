@@ -17,6 +17,8 @@ import java.util.List;
  * @param predictedValue valore continuo predetto dalla foglia, oppure {@code null} per nodi interni
  * @param attributeName  nome dell'attributo su cui effettuare lo split, oppure {@code null} per foglie
  * @param branchOptions  lista delle condizioni testuali dei rami figli (es. {@code "=A"}, {@code "<=20.5"})
+ * @author Marco Diana
+ * @version 1.0
  */
 public record PredictionStepDto(
         boolean isLeaf,
@@ -24,4 +26,7 @@ public record PredictionStepDto(
         String attributeName,
         List<String> branchOptions
 ) implements Serializable {
+
+    /** Identificativo di versione per la serializzazione. */
+    private static final long serialVersionUID = 1L;
 }

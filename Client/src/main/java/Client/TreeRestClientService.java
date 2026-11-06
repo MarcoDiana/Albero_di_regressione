@@ -18,6 +18,9 @@ import java.util.Map;
 /**
  * Servizio lato client che gestisce la comunicazione HTTP REST con il backend
  * (porta 8080) utilizzando Spring {@link RestClient}.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 @Service
 public class TreeRestClientService {
@@ -77,6 +80,7 @@ public class TreeRestClientService {
      *
      * @param tableName nome della tabella di training
      * @return risposta contenente le regole e il nodo radice
+     * @throws RuntimeException in caso di errore restituito dal server o fallimento della comunicazione HTTP
      */
     public TreeResponseDto learnTree(String tableName) {
         return restClient.post()
@@ -92,6 +96,7 @@ public class TreeRestClientService {
      *
      * @param tableName nome del file da caricare
      * @return risposta contenente le regole e il nodo radice
+     * @throws RuntimeException in caso di errore restituito dal server o fallimento della comunicazione HTTP
      */
     public TreeResponseDto loadTree(String tableName) {
         return restClient.post()
@@ -108,6 +113,7 @@ public class TreeRestClientService {
      * @param tableName nome della tabella o del modello
      * @param path      lista ordinata degli indici dei rami scelti
      * @return DTO descrittivo del nodo raggiunto
+     * @throws RuntimeException in caso di errore restituito dal server o fallimento della comunicazione HTTP
      */
     public PredictionStepDto predictStep(String tableName, List<Integer> path) {
         return restClient.post()

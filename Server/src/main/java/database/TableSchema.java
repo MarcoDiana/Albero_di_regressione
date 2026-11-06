@@ -14,6 +14,9 @@ import java.util.List;
 
 /**
  * Legge e rappresenta lo schema delle colonne di una tabella del database.
+ *
+ * @author Marco Diana
+ * @version 1.0
  */
 public class TableSchema implements Iterable<Column>{
 	
