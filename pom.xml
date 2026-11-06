@@ -21,6 +21,9 @@
         <junit.jupiter.version>5.11.4</junit.jupiter.version>
         <mockito.version>5.15.2</mockito.version>
         <maven.surefire.plugin.version>3.5.2</maven.surefire.plugin.version>
+        <spring.boot.version>3.4.3</spring.boot.version>
+        <vaadin.version>24.6.4</vaadin.version>
+        <springdoc.version>2.8.5</springdoc.version>
     </properties>
 
     <dependencyManagement>
@@ -43,6 +46,28 @@
                 <artifactId>mockito-junit-jupiter</artifactId>
                 <version>${mockito.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <!-- Spring Boot Dependencies BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Vaadin BOM -->
+            <dependency>
+                <groupId>com.vaadin</groupId>
+                <artifactId>vaadin-bom</artifactId>
+                <version>${vaadin.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- SpringDoc OpenAPI Swagger UI -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
