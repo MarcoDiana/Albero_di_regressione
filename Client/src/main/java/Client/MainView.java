@@ -3,7 +3,6 @@ package Client;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -45,7 +44,6 @@ import java.util.Locale;
  * @version 1.0
  */
 @Route("")
-@JavaScript("/tree-viewer.js")
 public class MainView extends VerticalLayout {
 
     /** Identificatore DOM del contenitore per il rendering SVG del diagramma Mermaid. */
@@ -363,7 +361,14 @@ public class MainView extends VerticalLayout {
         if (currentTreeRules == null) return;
         String mermaidCode = TreeMermaidConverter.convertRulesToMermaid(currentTreeRules);
         UI.getCurrent().getPage().executeJs(
-                "if (window.TreeViewer) { window.TreeViewer.render($0, $1); }",
+                "if (window.TreeViewer) {" +
+                "    window.TreeViewer.render($0, $1);" +
+                "} else {" +
+                "    const s = document.createElement('script');" +
+                "    s.src = '/tree-viewer.js';" +
+                "    s.onload = () => { if (window.TreeViewer) window.TreeViewer.render($0, $1); };" +
+                "    document.head.appendChild(s);" +
+                "}",
                 DIAGRAM_CONTAINER_ID, mermaidCode
         );
     }
