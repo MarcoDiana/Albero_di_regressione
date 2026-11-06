@@ -1,7 +1,6 @@
 package Client;
 
 import com.vaadin.flow.component.page.AppShellConfigurator;
-import com.vaadin.flow.theme.Theme;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -10,7 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Avvia il frontend web reattivo sulla porta 8081.
  */
 @SpringBootApplication(scanBasePackages = {"Client", "dto"})
-@Theme("lumo")
 public class ClientApplication implements AppShellConfigurator {
 
     /**

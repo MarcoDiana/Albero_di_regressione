@@ -5,6 +5,7 @@ import dto.PredictRequestDto;
 import dto.PredictionStepDto;
 import dto.TreeRequestDto;
 import dto.TreeResponseDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -28,11 +29,19 @@ public class TreeRestClientService {
     private final RestClient restClient;
 
     /**
+     * Costruttore predefinito senza argomenti per Spring Bean instantiation.
+     */
+    public TreeRestClientService() {
+        this(RestClient.builder(), "http://localhost:8080");
+    }
+
+    /**
      * Costruttore primario con iniezione del builder auto-configurato da Spring.
      *
      * @param restClientBuilder builder per RestClient
      * @param baseUrl           URL base del backend REST (letto da application.properties)
      */
+    @Autowired
     public TreeRestClientService(RestClient.Builder restClientBuilder,
                                  @Value("${tree.server.base-url:http://localhost:8080}") String baseUrl) {
         this.restClient = restClientBuilder

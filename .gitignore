@@ -60,4 +60,21 @@ log-estensione.*
 scripts/
 **/scripts/
 *.ps1
-
+
+### Vaadin frontend generato ###
+node_modules/
+**/node_modules/
+package.json
+**/package.json
+package-lock.json
+**/package-lock.json
+tsconfig.json
+**/tsconfig.json
+types.d.ts
+**/types.d.ts
+src/main/frontend/
+**/src/main/frontend/
+pnpm-lock.yaml
+**/pnpm-lock.yaml
+vite.generated.ts
+**/vite.generated.ts
