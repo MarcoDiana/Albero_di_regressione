@@ -4,9 +4,18 @@ import data.Attribute;
 import data.ContinuousAttribute;
 import data.Data;
 import data.DiscreteAttribute;
+import dto.PredictionStepDto;
 import server.UnknownValueException;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeSet;
 
 /**
@@ -276,7 +285,6 @@ public class RegressionTree implements Serializable {
             out.writeObject(this);
         }
     }
-
     /**
      * Carica da file un albero di regressione precedentemente salvato con salva().
      *
@@ -292,4 +300,85 @@ public class RegressionTree implements Serializable {
             return (RegressionTree) in.readObject();
         }
     }
+
+	/**
+	 * Naviga l'albero di regressione in modalita' stateless lungo la sequenza di indici
+	 * di ramo specificata nel percorso {@code path}.
+	 *
+	 * Se il percorso conduce a un nodo foglia, restituisce un {@link PredictionStepDto}
+	 * con {@code isLeaf = true} e il valore predetto calcolato dalla foglia.
+	 * Se il percorso conduce a un nodo interno, restituisce un {@link PredictionStepDto}
+	 * con {@code isLeaf = false}, il nome dell'attributo di split e le condizioni testuali
+	 * di tutti i rami figli disponibili per la scelta successiva.
+	 *
+	 * @param path sequenza ordinata 0-based degli indici dei rami da percorrere a partire dalla radice;
+	 *             se {@code null} o vuoto, valuta direttamente il nodo radice
+	 * @return DTO descrittivo del nodo raggiunto al termine della navigazione
+	 * @throws UnknownValueException se il percorso e' invalido (indice negativo, fuori limite
+	 *                               o tentativo di proseguire oltre una foglia)
+	 */
+	public PredictionStepDto navigate(List<Integer> path) throws UnknownValueException {
+		RegressionTree current = this;
+		if (path != null) {
+			for (Integer branchIndex : path) {
+				if (branchIndex == null || !(current.root instanceof SplitNode)) {
+					throw new UnknownValueException("Percorso non valido: il nodo corrente e' gia' una foglia o l'indice e' nullo.");
+				}
+				if (branchIndex < 0 || branchIndex >= current.childTree.length) {
+					throw new UnknownValueException(
+							"The answer should be an integer between 0 and " + (current.childTree.length - 1) + "!");
+				}
+				current = current.childTree[branchIndex];
+			}
+		}
+		if (current.root instanceof LeafNode leaf) {
+			return new PredictionStepDto(true, leaf.getPredictedClassValue(), null, List.of());
+		}
+		SplitNode splitNode = (SplitNode) current.root;
+		List<String> options = new ArrayList<>(splitNode.getNumberOfChildren());
+		for (int i = 0; i < splitNode.getNumberOfChildren(); i++) {
+			SplitNode.SplitInfo info = splitNode.getSplitInfo(i);
+			options.add(info.getComparator() + info.getSplitValue());
+		}
+		return new PredictionStepDto(false, null, splitNode.getAttribute().getName(), options);
+	}
+
+	/**
+	 * Restituisce una rappresentazione testuale completa che combina la struttura
+	 * dell'albero e tutte le regole di decisione IF-THEN estratte.
+	 *
+	 * @return stringa formattata con la struttura dell'albero e le regole
+	 */
+	public String getRules() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("********* TREE **********\n\n");
+		sb.append(toString());
+		sb.append("\n*************************\n\n");
+		sb.append("********* RULES **********\n\n");
+		collectRules("", sb);
+		sb.append("\n**************************\n");
+		return sb.toString();
+	}
+
+	/**
+	 * Metodo ausiliario ricorsivo che accumula le regole IF-THEN dell'albero in un StringBuilder.
+	 *
+	 * @param current condizioni gia' accumulate lungo il cammino dalla radice
+	 * @param sb      buffer su cui accodare le regole
+	 */
+	private void collectRules(String current, StringBuilder sb) {
+		if (root instanceof LeafNode leaf) {
+			String prefix = current.isEmpty() ? "" : current + " ==> ";
+			sb.append(prefix).append("Class=").append(leaf.getPredictedClassValue()).append("\n");
+		} else {
+			SplitNode splitRoot = (SplitNode) root;
+			for (int i = 0; i < childTree.length; i++) {
+				String condition = splitRoot.getAttribute().getName()
+						+ splitRoot.getSplitInfo(i).getComparator()
+						+ splitRoot.getSplitInfo(i).getSplitValue();
+				String newCurrent = current.isEmpty() ? condition : current + " AND " + condition;
+				childTree[i].collectRules(newCurrent, sb);
+			}
+		}
+	}
 }
