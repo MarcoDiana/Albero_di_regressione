@@ -282,7 +282,99 @@ QUERY
 
 ---
 
-## 6. Risoluzione dei Problemi Comuni (FAQ & Troubleshooting)
+## 6. Utilizzo dell'Interfaccia Web Vaadin Flow e Documentazione Swagger UI
+
+Oltre alla tradizionale interfaccia a riga di comando (CLI), il sistema include un'interfaccia grafica Web interattiva realizzata con **Vaadin Flow** e una suite di collaudo e documentazione delle API REST con **Swagger UI**.
+
+### 6.1 Porte di Rete e URL dei Servizi
+
+| Servizio | Modulo | Porta | URL di Accesso nel Browser |
+|---|---|---|---|
+| **Backend REST API** | `Server` | `8080` | `http://localhost:8080/api/trees` |
+| **Documentazione Swagger UI** | `Server` | `8080` | `http://localhost:8080/swagger-ui.html` |
+| **Specifiche OpenAPI 3 (JSON)** | `Server` | `8080` | `http://localhost:8080/v3/api-docs` |
+| **Frontend Web Vaadin Flow** | `Client` | `8081` | `http://localhost:8081` |
+
+---
+
+### 6.2 Avvio del Backend Spring Boot (Server REST)
+
+Aprire un terminale nella cartella radice del progetto ed eseguire:
+
+```bash
+mvn -pl Server spring-boot:run
+```
+
+Oppure avviando la classe `server.ServerApplication` da IntelliJ IDEA o compilando ed eseguendo direttamente:
+```bash
+java -cp "Server/target/classes;C:/Users/marco/.m2/repository/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar" server.ServerApplication
+```
+
+*Output atteso:*
+```text
+Tomcat started on port 8080 (http) with context path '/'
+Started ServerApplication in ... seconds
+```
+
+---
+
+### 6.3 Avvio del Frontend Web Vaadin Flow (Client Web)
+
+In un secondo terminale, eseguire:
+
+```bash
+mvn -pl Client spring-boot:run
+```
+
+Oppure avviando la classe `Client.ClientApplication` da IntelliJ IDEA o riga di comando:
+```bash
+java -cp "Client/target/classes" Client.ClientApplication
+```
+
+*Output atteso:*
+```text
+Tomcat started on port 8081 (http) with context path '/'
+Started ClientApplication in ... seconds
+```
+
+Una volta avviato, aprire il browser all'indirizzo:
+👉 **`http://localhost:8081`**
+
+---
+
+### 6.4 Guida Passo-Passo all'Interfaccia Grafica Web Vaadin
+
+1. **Selezione Sorgente Dati:**
+   - Tramite il selettore a radio button, scegliere tra:
+     - **"Database MySQL"** (per addestrare un nuovo albero da tabella);
+     - **"File serializzato (.dmp)"** (per caricare un modello salvato in precedenza).
+2. **Inserimento Tabella/File:**
+   - Digitare il nome della tabella desiderata (es. `provaC`).
+   - Cliccare sul pulsante **"Apprendi da Database"** o **"Carica da Archivio"**.
+3. **Visualizzazione di Regole e Albero:**
+   - Nella casella di testo centrale comparirà l'intera struttura dell'albero indotto e tutte le regole di decisione IF-THEN generate.
+4. **Navigazione Guidata per la Predizione:**
+   - Sotto la casella delle regole comparirà il pannello di predizione interattivo.
+   - Verrà mostrato il primo bivio decisionale (es. `Attributo di decisione: X`) con pulsanti cliccabili per ogni partizione (es. `[=A]` o `[=B]`).
+   - Cliccando su un pulsante, il client invierà una richiesta stateless al server per scendere nel ramo scelto.
+   - Se il percorso raggiunge un nodo intermedio (es. `Y`), verranno presentate le nuove opzioni (es. `[<=2.0]` o `[>2.0]`).
+   - Quando viene raggiunta una foglia, l'interfaccia presenterà in evidenza con badge verde il **valore continuo stimato** (es. `Classe Continua Predetta: 10.0`), accompagnato dal pulsante **"Nuova Predizione"** per ripetere il test.
+
+---
+
+### 6.5 Esplorazione e Collaudo con Swagger UI
+
+Per esplorare o collaudare direttamente gli endpoint REST:
+1. Accedere a `http://localhost:8080/swagger-ui.html`.
+2. Nella sezione **Regression Tree API**, saranno visualizzati i tre endpoint documentati:
+   - `POST /api/trees/learn`
+   - `POST /api/trees/load`
+   - `POST /api/trees/predict`
+3. Cliccare su un endpoint, premere **"Try it out"**, inserire il payload JSON (es. `{"tableName": "provaC"}`) e premere **"Execute"**: la risposta HTTP 200 con il JSON di ritorno sarà visualizzata immediatamente a video.
+
+---
+
+## 7. Risoluzione dei Problemi Comuni (FAQ & Troubleshooting)
 
 ### D1: Ricevo `DatabaseConnectionException: Failed to connect to the database`
 - **Causa:** Il servizio MySQL non è in esecuzione, oppure è in ascolto su una porta diversa da `3306`.

@@ -71,6 +71,15 @@ La suite è integrata nel ciclo di vita Maven attraverso il plugin `maven-surefi
 | **REQ-UTIL-05** | `Client` | `utility` | `KeyboardTest` | `testReadLong` | Parsing long a 64-bit con fallback `Long.MIN_VALUE` | Unit Test |
 | **REQ-UTIL-06** | `Client` | `utility` | `KeyboardTest` | `testReadFloatAndDouble` | Parsing float e double con fallback `NaN` e tracciamento errori | Unit Test |
 | **REQ-UTIL-07** | `Client` | `utility` | `KeyboardTest` | `testEndOfLineAndErrorControl` | Riconoscimento fine riga e controllo visualizzazione/reset errori | Unit Test |
+| **REQ-REST-01** | `Server` | `server` | `EndToEndRestAndClientIntegrationTest` | `testLearnTreeFromDatabaseE2E` | Apprendimento da MySQL (tabella `provaC`), regole e rootStep via REST | Integration Test (E2E) |
+| **REQ-REST-02** | `Server` | `server` | `EndToEndRestAndClientIntegrationTest` | `testPredictStepStatelessNavigationE2E` | Navigazione stateless passo-passo fino alle foglie con stima continua | Integration Test (E2E) |
+| **REQ-REST-03** | `Server` | `server` | `EndToEndRestAndClientIntegrationTest` | `testLoadFromFileAndPredictE2E` | Caricamento modello serializzato `.dmp` e predizione stateless | Integration Test (E2E) |
+| **REQ-REST-04** | `Server` | `server` | `EndToEndRestAndClientIntegrationTest` | `testErrorHandlingE2E` | Risposte semantiche HTTP 400 (Bad Request) e HTTP 404 (Not Found) | Error Handling (E2E) |
+| **REQ-REST-05** | `Server` | `server` | `EndToEndRestAndClientIntegrationTest` | `testOpenApiAndSwaggerUiAvailabilityE2E` | Validità specifiche JSON OpenAPI (`/v3/api-docs`) e HTML Swagger UI | Contract Test (E2E) |
+| **REQ-CLIENT-01** | `Client` | `Client` | `TreeRestClientServiceTest` | `testLearnTreeSuccess` | Invio POST `/api/trees/learn` e deserializzazione `TreeResponseDto` | Unit / Mock Test |
+| **REQ-CLIENT-02** | `Client` | `Client` | `TreeRestClientServiceTest` | `testLoadTreeSuccess` | Invio POST `/api/trees/load` e deserializzazione `TreeResponseDto` | Unit / Mock Test |
+| **REQ-CLIENT-03** | `Client` | `Client` | `TreeRestClientServiceTest` | `testPredictStepSuccess` | Invio POST `/api/trees/predict` e ricezione foglia continua | Unit / Mock Test |
+| **REQ-CLIENT-04** | `Client` | `Client` | `TreeRestClientServiceTest` | `testErrorHandlingWithJsonMessage` | Estrazione messaggio di errore dal body JSON di risposta HTTP 400 | Error Handling |
 
 ---
 
@@ -143,28 +152,63 @@ Questa classe valida la classe di utilità del client:
 - **`testReadFloatAndDouble`**: verifica numeri decimali e il fallback a `Float.NaN` e `Double.NaN`.
 - **`testEndOfLineAndErrorControl`**: verifica la segnalazione di fine riga, il conteggio degli errori e il toggle `setPrintErrors`.
 
+### 4.7 `server.EndToEndRestAndClientIntegrationTest`
+Questa classe esegue test End-to-End (E2E) completi sul backend Spring Boot REST avviato su porta casuale (`RANDOM_PORT`):
+- **`testLearnTreeFromDatabaseE2E`**: invia una richiesta HTTP POST a `/api/trees/learn` con payload `{"tableName": "provaC"}`. Verifica la risposta HTTP 200 OK, la presenza dell'intestazione RULES, la correttezza del nodo radice `rootStep` (split sull'attributo `X` con 2 opzioni) e la creazione del file `provaC.dmp` su disco.
+- **`testPredictStepStatelessNavigationE2E`**: effettua una sessione di navigazione stateless completa:
+  - Invoca `/predict` con percorso `[1]` (ramo `X=B`) e verifica il raggiungimento immediato di una foglia con valore numerico continuo predetto $10.0$ e lista opzioni vuota.
+  - Invoca `/predict` con percorso `[0]` (ramo `X=A`) e verifica il raggiungimento del nodo di split continuo `Y`.
+  - Percorre i rami `[0, 0]` e `[0, 1]` verificando le rispettive foglie con valori continui stimati $1.0$ e $1.5$, coerenti con il comportamento del protocollo socket.
+- **`testLoadFromFileAndPredictE2E`**: dopo aver salvato il modello, invia una richiesta POST a `/api/trees/load` specificando `provaC.dmp`, verifica il corretto caricamento in memoria e la successiva capacità predittiva stateless.
+- **`testErrorHandlingE2E`**: verifica la conformità dei codici di stato e payload JSON d'errore:
+  - `400 Bad Request` per tabelle inesistenti o nomi vuoti/nulli.
+  - `404 Not Found` con messaggio descrittivo per archivi `.dmp` mancanti su disco.
+  - `400 Bad Request` per tentativi di navigazione su percorsi non validi (indici fuori limite o oltre nodi foglia).
+- **`testOpenApiAndSwaggerUiAvailabilityE2E`**: interroga l'endpoint `/v3/api-docs` verificando la presenza della specifica OpenAPI 3 con tutti gli endpoint documentati (`/api/trees/learn`, `/load`, `/predict`), e verifica che `/swagger-ui.html` e `/swagger-ui/index.html` rispondano con HTTP 200 OK erogando l'interfaccia interattiva.
+
+### 4.8 `Client.TreeRestClientServiceTest`
+Questa classe collauda in isolamento il client HTTP `TreeRestClientService` tramite `MockRestServiceServer`:
+- **`testLearnTreeSuccess`**: verifica la composizione della richiesta POST `/api/trees/learn`, l'header `Content-Type: application/json` e la deserializzazione del payload JSON in un record `TreeResponseDto`.
+- **`testLoadTreeSuccess`**: verifica la corretta invocazione di `/api/trees/load` e il popolamento del DTO di risposta.
+- **`testPredictStepSuccess`**: verifica l'invio della richiesta con percorso vettoriale `path` a `/api/trees/predict` e la conversione nel record `PredictionStepDto`.
+- **`testErrorHandlingWithJsonMessage`**: simula una risposta HTTP 400 Bad Request con body `{"error": "Messaggio di errore"}`, accertando che il client estragga il messaggio descrittivo e sollevi un'eccezione `RuntimeException` con il testo esatto ricevuto.
+
 ---
 
 ## 5. Modalità di Esecuzione dei Test
 
-Per eseguire l'intera suite di test con Surefire:
+Per eseguire l'intera suite di test automatizzata (55 test) con Maven Surefire:
 
 ```powershell
-mvn -f "pom.xml" clean test
+mvn clean test
 ```
 
 Per eseguire selettivamente i test del server o del client:
 
 ```powershell
-# Modulo Server
-mvn -f "Server/pom.xml" test
+# Modulo Server (44 test: dati, database, albero, socket ed E2E REST)
+mvn -pl Server test
 
-# Modulo Client
-mvn -f "Client/pom.xml" test
+# Modulo Client (11 test: console keyboard e client REST HTTP)
+mvn -pl Client test
 ```
 
-Per eseguire una singola classe di test specifica (ad esempio `TreeNodesAndAlgorithmTest`):
+Per eseguire una singola classe di test specifica (ad esempio `EndToEndRestAndClientIntegrationTest`):
 
 ```powershell
-mvn -f "Server/pom.xml" test -Dtest=TreeNodesAndAlgorithmTest
+mvn -pl Server test -Dtest=EndToEndRestAndClientIntegrationTest
 ```
+
+---
+
+## 6. Report di Esecuzione e Metriche di Copertura
+
+Tutti i test inclusi nella suite vengono eseguiti con successo senza alcun fallimento né errore (**0 failures, 0 errors**):
+
+| Modulo | Classi di Test | Test Totali | Esito | Tempo di Esecuzione Tipico |
+|---|---|:---:|:---:|:---:|
+| **Root** | Aggregatore POM | 0 | SUCCESS | ~0.2 s |
+| **Client** | `KeyboardTest`, `TreeRestClientServiceTest` | 11 | SUCCESS (0 Failures, 0 Errors) | ~1.3 s |
+| **Server** | `AttributeTest`, `DataTest`, `DatabasePackageTest`, `TreeNodesAndAlgorithmTest`, `SocketClientServerIntegrationTest`, `EndToEndRestAndClientIntegrationTest` | 44 | SUCCESS (0 Failures, 0 Errors) | ~16.5 s |
+| **Totale Progetto** | **8 Classi di Test** | **55** | **100% PASS** | **~18 s** |
+

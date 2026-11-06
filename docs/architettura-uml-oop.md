@@ -873,9 +873,217 @@ flowchart TB
 
 ---
 
-## 10. Conclusioni e Valutazione di Qualità Ingegneristica
+---
+
+## 10. Modellazione dei Nuovi Package e Componenti dell'Estensione (Fasi 1–6)
+
+L'evoluzione architetturale del sistema introduce due nuovi package e un set completo di componenti per la comunicazione distribuita via HTTP/REST e l'interfaccia utente web reattiva.
+
+### 10.1 Diagramma delle Classi: Package `dto` (Contratti JSON Immutabili)
+
+I Data Transfer Object (DTO) sono realizzati come **Java Records** immutabili, incapsulando lo stato senza boilerplate e garantendo trasparenza referenziale e thread-safety intrinseca:
+
+```mermaid
+classDiagram
+    class Serializable {
+        <<interface>>
+    }
+
+    class TreeRequestDto {
+        <<record>>
+        -String tableName
+        +tableName() String
+    }
+
+    class PredictionStepDto {
+        <<record>>
+        -boolean isLeaf
+        -Double predictedValue
+        -String attributeName
+        -List~String~ branchOptions
+        +isLeaf() boolean
+        +predictedValue() Double
+        +attributeName() String
+        +branchOptions() List~String~
+    }
+
+    class TreeResponseDto {
+        <<record>>
+        -String tableName
+        -String treeRules
+        -PredictionStepDto rootStep
+        +tableName() String
+        +treeRules() String
+        +rootStep() PredictionStepDto
+    }
+
+    class PredictRequestDto {
+        <<record>>
+        -String tableName
+        -List~Integer~ path
+        +tableName() String
+        +path() List~Integer~
+    }
+
+    Serializable <|.. TreeRequestDto
+    Serializable <|.. PredictionStepDto
+    Serializable <|.. TreeResponseDto
+    Serializable <|.. PredictRequestDto
+
+    TreeResponseDto o-- PredictionStepDto : aggrega rootStep
+```
+
+---
+
+### 10.2 Diagramma delle Classi: Componenti Spring Boot REST e Vaadin Flow
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% LATO SERVER (Spring Boot REST)
+    class ServerApplication {
+        +main(args: String[]) void$
+    }
+
+    class TreeController {
+        -TreeService treeService
+        +TreeController(treeService: TreeService)
+        +learn(request: TreeRequestDto) ResponseEntity~TreeResponseDto~
+        +load(request: TreeRequestDto) ResponseEntity~TreeResponseDto~
+        +predict(request: PredictRequestDto) ResponseEntity~PredictionStepDto~
+    }
+
+    class TreeService {
+        -Map~String, RegressionTree~ activeTrees
+        +learnFromDb(tableName: String) TreeResponseDto
+        +loadFromFile(tableName: String) TreeResponseDto
+        +predictStep(tableName: String, path: List~Integer~) PredictionStepDto
+        +clearCache() void
+    }
+
+    class GlobalExceptionHandler {
+        +handleFileNotFound(ex: FileNotFoundException) ResponseEntity~Map~
+        +handleDomainExceptions(ex: Exception) ResponseEntity~Map~
+        +handleIoAndFormatExceptions(ex: Exception) ResponseEntity~Map~
+        +handleGenericException(ex: Exception) ResponseEntity~Map~
+    }
+
+    %% LATO CLIENT (Vaadin Flow)
+    class ClientApplication {
+        +main(args: String[]) void$
+    }
+
+    class TreeRestClientService {
+        -RestClient restClient
+        -ObjectMapper OBJECT_MAPPER$
+        +TreeRestClientService(restClientBuilder: RestClient.Builder, baseUrl: String)
+        +TreeRestClientService(baseUrl: String)
+        +learnTree(tableName: String) TreeResponseDto
+        +loadTree(tableName: String) TreeResponseDto
+        +predictStep(tableName: String, path: List~Integer~) PredictionStepDto
+    }
+
+    class MainView {
+        -TreeRestClientService restService
+        -List~Integer~ currentPath
+        -String currentTableName
+        +MainView(restService: TreeRestClientService)
+        -buildHeader() Component
+        -buildConfigurationSection() Component
+        -buildPredictionSection() Component
+        -renderStep(step: PredictionStepDto) void
+    }
+
+    %% RELAZIONI SERVER
+    ServerApplication ..> TreeController : configura via @Import
+    ServerApplication ..> TreeService : configura via @Import
+    ServerApplication ..> GlobalExceptionHandler : configura via @Import
+    TreeController o-- TreeService : dependency injection
+    TreeController ..> GlobalExceptionHandler : intercetta eccezioni
+
+    %% RELAZIONI CLIENT
+    ClientApplication ..> MainView : avvia UI Vaadin Flow
+    MainView o-- TreeRestClientService : dependency injection
+
+    %% RELAZIONE DI COMUNICAZIONE HTTP/JSON TRA CLIENT E SERVER
+    TreeRestClientService ..> TreeController : chiama via HTTP REST (JSON)
+```
+
+---
+
+### 10.3 Analisi dei Principi di Ingegneria del Software e OOP Avanzata
+
+1. **Java Records come Value Objects e Tipi Astratti Puri:**
+   - I DTO dell'estensione sono definiti come `record` introdotti in Java moderno. A differenza delle classi JavaBean tradizionali, i record sono classi immutabili i cui campi sono `private final`, prevenendo aliasing bug e modifiche di stato indesiderate durante il transito tra thread concorrenti e livelli applicativi.
+   - Forniscono implementazioni canoniche di `equals()` e `hashCode()` basate sul valore di tutti i componenti (structural equality), perfettamente aderenti alla definizione di Value Object del Domain-Driven Design.
+2. **Inversion of Control (IoC) e Dependency Injection (DI):**
+   - Sia nel backend che nel frontend web, l'accoppiamento tra componenti è gestito tramite iniezione delle dipendenze via costruttore (`TreeController(TreeService)` e `MainView(TreeRestClientService)`).
+   - Questo principio disaccoppia la creazione delle istanze dal loro utilizzo, facilitando l'isolamento dei test (es. mock del server o del client) e garantendo il rispetto del *Single Responsibility Principle* (SRP).
+3. **Layered Architecture e Separation of Concerns (SoC):**
+   - **Presentation Layer (Web UI):** `MainView` si occupa esclusivamente dell'ergonomia visiva, dei layout e dell'acquisizione degli eventi utente, delegando la logica di rete al client service.
+   - **Client Communication Layer:** `TreeRestClientService` incapsula gli endpoint HTTP, la serializzazione JSON e la traduzione dei codici di stato di errore in eccezioni applicative.
+   - **REST Controller Layer:** `TreeController` gestisce il protocollo HTTP, espone i contratti OpenAPI e orchestra le risposte con codici semantici (200, 400, 404).
+   - **Application Service Layer:** `TreeService` gestisce la concorrenza via `ConcurrentHashMap` e funge da ponte tra le richieste DTO e il core matematico.
+   - **Domain Core Layer:** `RegressionTree` e `Data` restano totalmente agnostici rispetto al protocollo di trasporto (funzionano identicamente sia sotto socket TCP che sotto REST API).
+4. **Pattern Stateless e Scalabilità:**
+   - La memorizzazione del cammino (`path: List<Integer>`) sul client e la sua valutazione istantanea tramite `RegressionTree.navigate(path)` elimina la necessità di mantenere thread bloccati in ascolto per ciascun client connesso, permettendo al server di scalare a migliaia di utenti simultanei.
+5. **Component-Based UI in Puro Java (Vaadin Flow):**
+   - L'interfaccia utente è strutturata ad oggetti secondo una gerarchia ad albero di componenti (Composite Pattern), dove layout complessi (`VerticalLayout`, `HorizontalLayout`) incapsulano widget atomici (`Button`, `TextField`, `TextArea`, `RadioButtonGroup`), gestiti tramite listener polimorfici orientati agli eventi.
+
+---
+
+### 10.4 Diagramma di Sequenza: Flusso REST Stateless Completo
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Utente as Utente Web (Browser)
+    participant UI as MainView (Vaadin :8081)
+    participant ClientService as TreeRestClientService
+    participant Controller as TreeController (:8080)
+    participant Service as TreeService
+    participant Tree as RegressionTree
+    participant DB as MySQL (MapDB)
+
+    %% APPRENDIMENTO
+    Utente->>UI: Seleziona "Database" e inserisce "provaC"
+    UI->>ClientService: learnTree("provaC")
+    ClientService->>Controller: POST /api/trees/learn {"tableName":"provaC"}
+    Controller->>Service: learnFromDb("provaC")
+    Service->>DB: SELECT su provaC
+    DB-->>Service: Recordset 15 tuple
+    Service->>Tree: new RegressionTree(data)
+    Note over Tree: Induzione dell'albero e calcolo SSE
+    Service->>Tree: salva("provaC.dmp")
+    Service->>Tree: navigate(List.of())
+    Tree-->>Service: PredictionStepDto (radice: attribute="X", options=["=A","=B"])
+    Service-->>Controller: TreeResponseDto
+    Controller-->>ClientService: HTTP 200 OK (JSON)
+    ClientService-->>UI: TreeResponseDto
+    UI->>Utente: Visualizza regole e primo bivio [=A] / [=B]
+
+    %% PREDIZIONE PASSO 1
+    Utente->>UI: Clicca su opzione 1 ([=B])
+    UI->>ClientService: predictStep("provaC", [1])
+    ClientService->>Controller: POST /api/trees/predict {"tableName":"provaC", "path":[1]}
+    Controller->>Service: predictStep("provaC", [1])
+    Service->>Tree: navigate([1])
+    Note over Tree: Raggiunta foglia per X=B
+    Tree-->>Service: PredictionStepDto (isLeaf=true, predictedValue=10.0)
+    Service-->>Controller: PredictionStepDto
+    Controller-->>ClientService: HTTP 200 OK (JSON)
+    ClientService-->>UI: PredictionStepDto
+    UI->>Utente: Badge "Classe Predetta: 10.0"
+```
+
+---
+
+## 11. Conclusioni e Valutazione di Qualità Ingegneristica
 
 L'analisi architetturale e teorica condotta sul sistema **Albero di Regressione** certifica l'eccellenza e la conformità ingegneristica della soluzione rispetto ai canoni dell'Ingegneria del Software avanzata:
 1. **Coerenza con la Teoria dell'Astrazione**: La mappatura delle 6 classi sintattiche, il rispetto della cittadinanza di prima classe dei valori e la demarcazione tra specifica e realizzazione assicurano un'architettura manutenibile, testabile ed estendibile.
 2. **Robustezza dell'Incapsulamento**: L'impiego sinergico di pareti opache e traslucide tutela la consistenza interna dei dati impedendo manomissioni accidentali, mentre la separazione tra Specification (`RegressionTree`) e Body (`Node`, `SplitNode`) concretizza in ambiente Java il rigore formale dei moduli Ada.
 3. **Flessibilità Evolutiva**: La scelta consapevole del paradigma a oggetti per la gerarchia dei nodi e degli attributi, validata attraverso la matrice di William R. Cook, garantisce un'estensibilità aperta sui costruttori, rendendo l'infrastruttura nativamente pronta all'integrazione di nuovi operatori di split o modelli d'insieme (*ensemble methods*).
+4. **Modernità dell'Estensione Distribuita**: L'integrazione delle Fasi 1–6 dimostra la naturale evoluzione del sistema da un modello socket accademico a un'infrastruttura di livello enterprise, introducendo contratti DTO immutabili, documentazione OpenAPI conforme agli standard industriali e un'interfaccia reattiva moderna.
+
