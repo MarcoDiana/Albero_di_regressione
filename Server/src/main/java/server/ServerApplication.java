@@ -2,6 +2,7 @@ package server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
 
 /**
  * Entry point dell'applicazione Spring Boot per il backend dell'Albero di Regressione.
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * all'indirizzo {@code http://localhost:8080/swagger-ui.html}.
  */
 @SpringBootApplication(scanBasePackages = {"server", "tree", "data", "database", "dto"})
+@Import({TreeService.class, TreeController.class, GlobalExceptionHandler.class})
 public class ServerApplication {
 
     /**

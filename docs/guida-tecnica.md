@@ -389,3 +389,88 @@ graph TD
 
 - **Chiusura Deterministica (Try-With-Resources):** Le connessioni JDBC, gli `Statement`, i `ResultSet` e gli stream di file/socket sono gestiti tramite blocchi `try-with-resources` o clausole `finally` di pulizia esplicita, prevenendo memory leak, connection leak verso MySQL o file-handle rimasti aperti.
 - **Isolamento dei Thread Client:** Ogni eccezione di I/O o disconnessione anomala del client causata dalla chiusura improvvisa della finestra terminale viene intercettata nel blocco `catch (IOException | ClassNotFoundException e)` del singolo `ServerOneClient`, provocando la chiusura ordinata del rispettivo socket senza impattare né il server principale `MultiServer` né gli altri client connessi concorrentemente.
+
+---
+
+## 6. Architettura dell'Estensione Web: Backend Spring Boot REST, Contratti DTO, Navigazione Stateless, OpenAPI / Swagger e Frontend Vaadin Flow
+
+In aggiunta all'infrastruttura socket TCP nativa, il sistema include un'estensione architetturale completa basata su standard Web moderni, realizzando la transizione da un protocollo di connessione point-to-point stateful a un'architettura distribuita **stateless HTTP/REST** con interfaccia grafica reattiva web.
+
+```mermaid
+graph TB
+    subgraph Client Tier: Web Browser & Vaadin Flow
+        UI[Vaadin Flow Responsive UI - MainView :8081]
+        RCS[TreeRestClientService - Spring RestClient]
+        UI --> RCS
+    end
+
+    subgraph Server Tier: Spring Boot 3.4 REST API :8080
+        TC[TreeController - REST Endpoints]
+        TS[TreeService - Concurrent In-Memory Cache]
+        GEH[GlobalExceptionHandler - @RestControllerAdvice]
+        DOC[SpringDoc OpenAPI 3 / Swagger UI]
+        
+        RCS <== HTTP/JSON POST ==> TC
+        TC --> TS
+        TC -.-> GEH
+        TC -.-> DOC
+    end
+
+    subgraph Core Engine Tier: Algoritmo e Persistenza
+        RT[RegressionTree - Stateless Navigation: navigate]
+        DATA[Data Layer & MySQL MapDB]
+        FS[(Local Storage: .dmp Files)]
+        
+        TS --> RT
+        RT --> DATA
+        RT --> FS
+    end
+```
+
+### 6.1 Motivazione e Paradigma Stateless
+Il protocollo socket classico vincola il client a una connessione TCP persistente e bidirezionale in cui il server memorizza nello stack di chiamata del thread `ServerOneClient` la posizione corrente durante la discesa ricorsiva dell'albero. Se la connessione cade, la sessione viene persa.
+L'estensione Web introduce il paradigma **stateless**: ogni richiesta HTTP inviata al server contiene l'intero contesto necessario per individuare il sotto-nodo desiderato, consentendo scalabilità orizzontale, riuso tra più utenti concorrenti e tolleranza alle disconnessioni.
+
+### 6.2 Contratti DTO Immutabili (Package `dto`)
+La comunicazione tra client e server avviene tramite contratti JSON modellati come **Java Records** immutabili nel package `dto` (condiviso semanticamente tra Server e Client):
+1. **`TreeRequestDto(String tableName)`:** incapsula il nome della tabella del database o dell'archivio da elaborare.
+2. **`PredictionStepDto(boolean isLeaf, Double predictedValue, String attributeName, List<String> branchOptions)`:** descrive lo stato del nodo raggiunto nell'albero. Se `isLeaf == true`, contiene il valore numerico stimato `predictedValue` ed esclude opzioni di scelta; se `isLeaf == false`, specifica l'attributo di split (`attributeName`) e l'elenco delle condizioni dei rami figli (`branchOptions`).
+3. **`TreeResponseDto(String tableName, String treeRules, PredictionStepDto rootStep)`:** restituito dopo l'apprendimento o il caricamento, contiene il nome della tabella, la trascrizione completa dell'albero e delle regole IF-THEN (`treeRules`), e il DTO descrittivo della radice (`rootStep`).
+4. **`PredictRequestDto(String tableName, List<Integer> path)`:** invia al server il nome del modello e la sequenza 0-based di indici di ramo percorsi (`path`), richiedendo la valutazione stateless del nodo corrispondente.
+
+I Record garantiscono costruttori canonici, metodi di accesso uniformi, implementazione corretta di `equals()`, `hashCode()`, `toString()` e serializzabilità Jackson automatica senza overhead o stato mutabile.
+
+### 6.3 Navigazione Stateless Ricorsiva in `RegressionTree`
+Per supportare il paradigma stateless senza alterare il funzionamento del socket, la classe `tree.RegressionTree` è stata arricchita con due metodi chiave con retrocompatibilità totale:
+- **`public PredictionStepDto navigate(List<Integer> path) throws UnknownValueException`:** a partire dalla radice dell'albero, itera sequenzialmente lungo gli indici specificati in `path`. Se l'indice è valido e il nodo corrente è uno `SplitNode`, discende nel sotto-albero `childTree[branchIndex]`. Se il percorso conduce a un `LeafNode`, restituisce un `PredictionStepDto` foglia; altrimenti restituisce il bivio decisionale corrente con le condizioni di split formulate dinamicamente.
+- **`public String getRules()`:** metodo thread-safe che genera la stringa completa dell'albero e delle regole IF-THEN senza richiedere flussi di output standard.
+
+### 6.4 Backend Spring Boot REST API
+Il backend è ospitato nel modulo `Server` su porta `8080`:
+- **`server.ServerApplication`:** classe di avvio annotata con `@SpringBootApplication` e `@Import({TreeService.class, TreeController.class, GlobalExceptionHandler.class})`.
+- **`server.TreeService`:** servizio applicativo `@Service` dotato di una cache concorrente in memoria `ConcurrentHashMap<String, RegressionTree>`. Se un albero non è in cache al momento della predizione, viene automaticamente ripristinato dal file binario `.dmp` su disco.
+- **`server.TreeController`:** controller `@RestController` su base path `/api/trees`:
+  - `POST /api/trees/learn`: addestra l'albero da tabella MySQL, salva il `.dmp`, memorizza in cache e restituisce `TreeResponseDto`.
+  - `POST /api/trees/load`: deserializza il `.dmp` da disco, memorizza in cache e restituisce `TreeResponseDto`.
+  - `POST /api/trees/predict`: esegue la navigazione stateless lungo `path` e restituisce `PredictionStepDto`.
+- **`server.GlobalExceptionHandler`:** gestore centralizzato `@RestControllerAdvice` che converte le eccezioni in risposte HTTP semantiche con payload `{"error": "..."}`:
+  - `404 Not Found` per `FileNotFoundException` (file `.dmp` inesistente).
+  - `400 Bad Request` per `TrainingDataException`, `UnknownValueException`, `IllegalArgumentException`, `IOException`.
+  - `500 Internal Server Error` per eccezioni impreviste.
+
+### 6.5 Documentazione OpenAPI 3 e Swagger UI
+L'integrazione della dipendenza `org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5` espone:
+- Specifiche OpenAPI 3 formali in formato JSON all'endpoint `/v3/api-docs`.
+- Interfaccia grafica interattiva all'endpoint `http://localhost:8080/swagger-ui.html` (reindirizzata a `/swagger-ui/index.html`), consentendo a sviluppatori e collaudatori di testare in tempo reale le richieste REST con validazione degli schemi e visualizzazione immediata delle risposte HTTP.
+
+### 6.6 Frontend Web Vaadin Flow (Porta 8081)
+Il modulo `Client` include un frontend web moderno in puro Java con **Vaadin Flow 24.6.4**:
+- **`Client.ClientApplication`:** entrypoint Spring Boot che avvia il server web embedded su porta `8081`.
+- **`Client.TreeRestClientService`:** client HTTP dichiarativo basato su Spring `RestClient` (`@Service`) che comunica con il backend su `http://localhost:8080`.
+- **`Client.MainView`:** interfaccia utente responsive (`@Route("")`) organizzata con layout ergonomico:
+  - Form di configurazione per selezionare la modalità (Database MySQL o File `.dmp`) e inserire il nome della tabella (es. `provaC`).
+  - Pulsante di acquisizione con feedback di caricamento e gestione delle notifiche visive di errore.
+  - Sezione di visualizzazione con `TextArea` a larghezza intera per consultare la struttura dell'albero e le regole decisionali IF-THEN estratte.
+  - Pannello di predizione interattivo: visualizza dinamicamente l'attributo di split corrente e crea pulsanti cliccabili per ciascun ramo figlio (es. `[=A]`, `[=B]` oppure `[<=2.0]`, `[>2.0]`).
+  - Al raggiungimento della foglia, presenta in evidenza con badge grafico il valore numerico continuo predetto e un pulsante per avviare una nuova predizione.
+

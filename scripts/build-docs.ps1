@@ -183,7 +183,7 @@ function Convert-MarkdownToPdf {
     Write-Host "     [OK] PDF generato ($([Math]::Round($pdfSize / 1KB, 1)) KB)" -ForegroundColor Green
 }
 
-# 4. Generazione dei 3 file PDF richiesti
+# 4. Generazione dei 5 file PDF richiesti
 Write-Host "`n[3/3] Generazione file PDF ad alta risoluzione in docs/pdf/..." -ForegroundColor Yellow
 
 Convert-MarkdownToPdf `
@@ -195,6 +195,16 @@ Convert-MarkdownToPdf `
     -SourceMd (Join-Path $repoRoot "docs\guida-utente-installazione.md") `
     -TargetPdf (Join-Path $docsPdfDir "guida-utente-installazione.pdf") `
     -Title "Guida Utente e di Installazione - Albero di Regressione"
+
+Convert-MarkdownToPdf `
+    -SourceMd (Join-Path $repoRoot "docs\documentazione-test.md") `
+    -TargetPdf (Join-Path $docsPdfDir "documentazione-test.pdf") `
+    -Title "Documentazione della Suite di Test - Albero di Regressione"
+
+Convert-MarkdownToPdf `
+    -SourceMd (Join-Path $repoRoot "docs\architettura-uml-oop.md") `
+    -TargetPdf (Join-Path $docsPdfDir "architettura-uml-oop.pdf") `
+    -Title "Architettura Software, Modellazione UML e Teoria OOP - Albero di Regressione"
 
 Convert-MarkdownToPdf `
     -SourceMd (Join-Path $repoRoot "README.md") `
