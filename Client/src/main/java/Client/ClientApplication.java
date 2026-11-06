@@ -3,6 +3,7 @@ package Client;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
  * Entry point dell'applicazione Spring Boot Web con Vaadin Flow.
@@ -22,10 +23,14 @@ public class ClientApplication implements AppShellConfigurator {
 
     /**
      * Metodo di avvio dell'applicazione Client Spring Boot / Vaadin Flow.
+     * Configura la modalità non headless per consentire l'interazione con il desktop
+     * e l'apertura automatica del browser all'avvio.
      *
      * @param args argomenti passati da riga di comando
      */
     public static void main(String[] args) {
-        SpringApplication.run(ClientApplication.class, args);
+        new SpringApplicationBuilder(ClientApplication.class)
+                .headless(false)
+                .run(args);
     }
 }

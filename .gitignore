@@ -78,6 +78,8 @@ pnpm-lock.yaml
 **/pnpm-lock.yaml
 vite.generated.ts
 **/vite.generated.ts
+vite.config.ts
+**/vite.config.ts
 
 ### Submodule generated javadoc docs ###
 Client/docs/

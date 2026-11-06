@@ -467,12 +467,13 @@ L'integrazione della dipendenza `org.springdoc:springdoc-openapi-starter-webmvc-
 Il modulo `Client` include un frontend web moderno in puro Java con **Vaadin Flow 24.6.4**:
 - **`Client.ClientApplication`:** entrypoint Spring Boot che avvia il server web embedded su porta `8081`.
 - **`Client.TreeRestClientService`:** client HTTP dichiarativo basato su Spring `RestClient` (`@Service`) che comunica con il backend su `http://localhost:8080`.
-- **`Client.MainView`:** interfaccia utente responsive (`@Route("")`) organizzata con layout ergonomico:
+- **`Client.TreeMermaidConverter`:** componente di utilità che esegue il parsing delle regole testuali fornite da `RegressionTree.getRules()`, ricostruisce l'albero decisionale mediante un Trie e genera codice Mermaid `graph TD` conforme, colorando i nodi split in azzurro e le foglie continue in verde.
+- **`Client.BrowserLauncher`:** componente `@Component` che intercetta l'evento `ApplicationReadyEvent` all'avvio del server embedded e apre automaticamente il browser di sistema su `http://localhost:8081` tramite `Desktop.browse()` o comandi nativi di fallback (`rundll32`, `open`, `xdg-open`), con disattivazione selettiva durante i test automatizzati.
+- **`Client.MainView`:** interfaccia utente responsive (`@Route("")`) organizzata con card layout ergonomico:
   - Form di configurazione per selezionare la modalità (Database MySQL o File `.dmp`) e inserire il nome della tabella (es. `provaC`).
-  - Pulsante di acquisizione con feedback di caricamento e gestione delle notifiche visive di errore.
-  - Sezione di visualizzazione con `TextArea` a larghezza intera per consultare la struttura dell'albero e le regole decisionali IF-THEN estratte.
-  - Pannello di predizione interattivo: visualizza dinamicamente l'attributo di split corrente e crea pulsanti cliccabili per ciascun ramo figlio (es. `[=A]`, `[=B]` oppure `[<=2.0]`, `[>2.0]`).
-  - Al raggiungimento della foglia, presenta in evidenza con badge grafico il valore numerico continuo predetto e un pulsante per avviare una nuova predizione.
+  - Visualizzazione multilivello a schede (`TabSheet`): Diagramma vettoriale Mermaid SVG interattivo, Regole IF-THEN a card con badge colorati per condizione atomica, e visualizzazione testuale grezza monospace.
+  - Pannello di predizione guidata provvisto di breadcrumb stepper interattivo (`Radice › Passo 1 › ...`) per tornare indietro a qualsiasi bivio decisionale precedente con un solo click.
+  - Card del risultato foglia ad alta visibilità con valore stimato a grandi cifre (36px), statistiche di percorso e pulsanti di reset rapido.
 
 
 
@@ -536,17 +537,19 @@ La configurazione del plugin Maven `maven-javadoc-plugin` nel root `pom.xml` è 
 
 
 
-La correttezza matematica, la robustezza e la conformità architetturale del sistema sono certificate da una suite di **55 test automatizzati** eseguiti tramite JUnit 5, Mockito e Spring Boot Test:
+La correttezza matematica, la robustezza e la conformità architetturale del sistema sono certificate da una suite di **64 test automatizzati** eseguiti tramite JUnit 5, Mockito e Spring Boot Test:
 
 
 
 ### 8.1 Struttura della Suite di Test
 
-1. **Modulo Client (11 test):**
+1. **Modulo Client (20 test):**
 
    - `utility.KeyboardTest` (7 test): validazione isolata dell'acquisizione di tutti i tipi primitivi (`String`, `boolean`, `char`, `int`, `long`, `float`, `double`), gestione errori e reset buffer tramite reflection.
 
    - `Client.TreeRestClientServiceTest` (4 test): collaudo del client REST basato su Spring `RestClient` mediante `MockRestServiceServer`, con verifica delle chiamate POST `/learn`, `/load`, `/predict` e dell'estrazione dei messaggi d'errore JSON.
+   - `Client.TreeMermaidConverterTest` (5 test): validazione del parser di regole e del generatore di grafi decisionali Mermaid vettoriali per la visualizzazione dell'albero a video.
+   - `Client.BrowserLauncherTest` (4 test): collaudo della configurazione, gestione URL non validi, disabilitazione su test e simulazione comandi fallback cross-platform per l'avvio automatico del browser.
 
 2. **Modulo Server (44 test):**
 
@@ -566,7 +569,7 @@ La correttezza matematica, la robustezza e la conformità architetturale del sis
 
 ### 8.2 Risultati del Testing
 
-- **Test Totali Eseguiti:** 55
+- **Test Totali Eseguiti:** 64
 
 - **Fallimenti (Failures):** 0
 
