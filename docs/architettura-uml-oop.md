@@ -4,29 +4,29 @@
 
 ```mermaid
 flowchart TD
-    subgraph ClientLayer ["Client Layer"]
+    subgraph ClientModule ["Modulo Client (Maven)"]
         PkgClient["Client"]
         PkgUtility["utility"]
+        PkgClientDto["dto"]
     end
 
-    subgraph DtoLayer ["Shared Contracts"]
-        PkgDto["dto"]
-    end
-
-    subgraph ServerLayer ["Server Layer"]
+    subgraph ServerModule ["Modulo Server (Maven)"]
         PkgServer["server"]
         PkgTree["tree"]
         PkgData["data"]
         PkgDatabase["database"]
+        PkgServerDto["dto"]
     end
 
     PkgClient -.->|"«import»"| PkgUtility
-    PkgClient -.->|"«import»"| PkgDto
+    PkgClient -.->|"«import»"| PkgClientDto
     PkgServer -.->|"«import»"| PkgTree
     PkgServer -.->|"«import»"| PkgData
     PkgServer -.->|"«import»"| PkgDatabase
-    PkgServer -.->|"«import»"| PkgDto
+    PkgServer -.->|"«import»"| PkgServerDto
     PkgTree -.->|"«import»"| PkgData
+    PkgTree -.->|"«import»"| PkgServerDto
+    PkgTree -.->|"«import»"| PkgServer
     PkgData -.->|"«import»"| PkgDatabase
 ```
 
@@ -36,6 +36,7 @@ flowchart TD
 classDiagram
     class Attribute {
         <<abstract>>
+        -long serialVersionUID$
         -String name
         -int index
         #Attribute(name: String, index: int)
@@ -45,10 +46,12 @@ classDiagram
     }
 
     class ContinuousAttribute {
+        -long serialVersionUID$
         +ContinuousAttribute(name: String, index: int)
     }
 
     class DiscreteAttribute {
+        -long serialVersionUID$
         -Set~String~ values
         +DiscreteAttribute(name: String, index: int, values: String[])
         +getNumberOfDistinctValues() int
@@ -78,6 +81,7 @@ classDiagram
     }
 
     class TrainingDataException {
+        -long serialVersionUID$
         +TrainingDataException(message: String)
         +TrainingDataException(message: String, cause: Throwable)
     }
@@ -97,14 +101,15 @@ classDiagram
 ```mermaid
 classDiagram
     class DbAccess {
-        -String DRIVER_CLASS_NAME
-        -String DBMS
+        -String DRIVER_CLASS_NAME$
+        -String DBMS$
+        -int PORT$
         -String SERVER
         -String DATABASE
-        -int PORT
         -String USER_ID
         -String PASSWORD
         -Connection conn
+        +DbAccess()
         +initConnection() void
         +getConn() Connection
         +getConnection() Connection
@@ -122,11 +127,12 @@ classDiagram
 
     class Example {
         -List~Object~ example
+        +Example()
         +add(o: Object) void
         +get(i: int) Object
         +compareTo(ex: Example) int
-        +iterator() Iterator~Object~
         +toString() String
+        +iterator() Iterator~Object~
     }
 
     class TableSchema {
@@ -145,11 +151,15 @@ classDiagram
     }
 
     class DatabaseConnectionException {
+        -long serialVersionUID$
         +DatabaseConnectionException(message: String)
+        +DatabaseConnectionException(message: String, cause: Throwable)
     }
 
     class EmptySetException {
+        -long serialVersionUID$
         +EmptySetException(message: String)
+        +EmptySetException(message: String, cause: Throwable)
     }
 
     Iterable <|.. Example
@@ -167,6 +177,7 @@ classDiagram
 classDiagram
     class Node {
         <<abstract>>
+        -long serialVersionUID$
         -int idNodeCount$
         -int idNode
         -int beginExampleIndex
@@ -182,6 +193,7 @@ classDiagram
     }
 
     class LeafNode {
+        -long serialVersionUID$
         -Double predictedClassValue
         ~LeafNode(trainingSet: Data, beginExampleIndex: int, endExampleIndex: int)
         ~getPredictedClassValue() Double
@@ -191,6 +203,7 @@ classDiagram
 
     class SplitNode {
         <<abstract>>
+        -long serialVersionUID$
         -Attribute attribute
         #List~SplitInfo~ mapSplit
         -double splitVariance
@@ -207,6 +220,7 @@ classDiagram
     }
 
     class SplitInfo {
+        -long serialVersionUID$
         -Object splitValue
         -int beginIndex
         -int endIndex
@@ -223,6 +237,7 @@ classDiagram
     }
 
     class DiscreteNode {
+        -long serialVersionUID$
         ~DiscreteNode(trainingSet: Data, beginExampleIndex: int, endExampleIndex: int, attribute: DiscreteAttribute)
         #setSplitInfo(trainingSet: Data, beginExampleIndex: int, endExampleIndex: int, attribute: Attribute) void
         ~testCondition(value: Object) int
@@ -230,6 +245,7 @@ classDiagram
     }
 
     class ContinuousNode {
+        -long serialVersionUID$
         ~ContinuousNode(trainingSet: Data, beginExampleIndex: int, endExampleIndex: int, attribute: ContinuousAttribute)
         #setSplitInfo(trainingSet: Data, beginExampleIndex: int, endExampleIndex: int, attribute: Attribute) void
         ~testCondition(value: Object) int
@@ -237,6 +253,7 @@ classDiagram
     }
 
     class RegressionTree {
+        -long serialVersionUID$
         -Node root
         -RegressionTree[] childTree
         -RegressionTree()
@@ -269,12 +286,42 @@ classDiagram
     SplitNode o-- "1" Attribute : attribute
 ```
 
-## 5. Diagramma UML delle Classi — Package `server`, `Client` e `utility`
+## 5. Diagramma UML delle Classi — Package `server`
 
 ```mermaid
 classDiagram
+    class ServerApplication {
+        +ServerApplication()
+        +main(args: String[])$ void
+    }
+
+    class TreeService {
+        -Map~String,RegressionTree~ activeTrees
+        +TreeService()
+        +learnFromDb(tableName: String) TreeResponseDto
+        +loadFromFile(tableName: String) TreeResponseDto
+        +predictStep(tableName: String, path: List~Integer~) PredictionStepDto
+        +clearCache() void
+    }
+
+    class TreeController {
+        -TreeService treeService
+        +TreeController(treeService: TreeService)
+        +learn(request: TreeRequestDto) ResponseEntity~TreeResponseDto~
+        +load(request: TreeRequestDto) ResponseEntity~TreeResponseDto~
+        +predict(request: PredictRequestDto) ResponseEntity~PredictionStepDto~
+    }
+
+    class GlobalExceptionHandler {
+        +GlobalExceptionHandler()
+        +handleFileNotFound(ex: FileNotFoundException) ResponseEntity
+        +handleDomainExceptions(ex: Exception) ResponseEntity
+        +handleIoAndFormatExceptions(ex: Exception) ResponseEntity
+        +handleGenericException(ex: Exception) ResponseEntity
+    }
+
     class MultiServer {
-        -int PORT
+        -int port
         +MultiServer(port: int)
         -run() void
     }
@@ -288,11 +335,61 @@ classDiagram
     }
 
     class UnknownValueException {
+        -long serialVersionUID$
         +UnknownValueException(message: String)
+        +UnknownValueException(message: String, cause: Throwable)
     }
 
-    class ClientMain {
+    Thread <|-- ServerOneClient
+    Exception <|-- UnknownValueException
+    TreeController --> TreeService : delega business logic
+    TreeService o-- "0..*" RegressionTree : cache activeTrees
+    MultiServer ..> ServerOneClient : crea thread
+    ServerOneClient ..> RegressionTree : esegue
+```
+
+## 6. Diagramma UML delle Classi — Package `Client` e `utility`
+
+```mermaid
+classDiagram
+    class ClientApplication {
+        +ClientApplication()
         +main(args: String[])$ void
+    }
+
+    class Main {
+        +Main()
+        +main(args: String[])$ void
+    }
+
+    class TreeRestClientService {
+        -ObjectMapper OBJECT_MAPPER$
+        -RestClient restClient
+        +TreeRestClientService()
+        +TreeRestClientService(restClientBuilder: Builder, baseUrl: String)
+        +TreeRestClientService(baseUrl: String)
+        +learnTree(tableName: String) TreeResponseDto
+        +loadTree(tableName: String) TreeResponseDto
+        +predictStep(tableName: String, path: List~Integer~) PredictionStepDto
+    }
+
+    class MainView {
+        -TreeRestClientService treeRestClientService
+        -String currentTableName
+        -List~Integer~ currentPath
+        -TextField tableNameField
+        -Button learnBtn
+        -Button loadBtn
+        -TextArea rulesArea
+        -VerticalLayout stepContainer
+        +MainView(treeRestClientService: TreeRestClientService)
+        -handleLearn() void
+        -handleLoad() void
+        -renderInitialStepState() void
+        -doPredictStep() void
+        -renderStep(step: PredictionStepDto) void
+        -showSuccess(msg: String) void
+        -showError(msg: String) void
     }
 
     class Keyboard {
@@ -301,6 +398,7 @@ classDiagram
         -String current_token$
         -StringTokenizer reader$
         -BufferedReader in$
+        -Keyboard()
         +getErrorCount()$ int
         +resetErrorCount(count: int)$ void
         +getPrintErrors()$ boolean
@@ -320,25 +418,26 @@ classDiagram
         +readDouble()$ double
     }
 
-    Thread <|-- ServerOneClient
-    Exception <|-- UnknownValueException
-    MultiServer ..> ServerOneClient : crea thread
-    ServerOneClient ..> RegressionTree : esegue
-    ClientMain ..> Keyboard : I/O console
+    AppShellConfigurator <|.. ClientApplication
+    VerticalLayout <|-- MainView
+    MainView --> TreeRestClientService : chiama REST
+    Main ..> Keyboard : I/O console
 ```
 
-## 6. Diagramma UML delle Classi — Package `dto` (Contratti JSON)
+## 7. Diagramma UML delle Classi — Package `dto` (Contratti JSON)
 
 ```mermaid
 classDiagram
     class TreeRequestDto {
         <<record>>
+        -long serialVersionUID$
         -String tableName
         +tableName() String
     }
 
     class PredictionStepDto {
         <<record>>
+        -long serialVersionUID$
         -boolean isLeaf
         -Double predictedValue
         -String attributeName
@@ -351,6 +450,7 @@ classDiagram
 
     class TreeResponseDto {
         <<record>>
+        -long serialVersionUID$
         -String tableName
         -String treeRules
         -PredictionStepDto rootStep
@@ -361,6 +461,7 @@ classDiagram
 
     class PredictRequestDto {
         <<record>>
+        -long serialVersionUID$
         -String tableName
         -List~Integer~ path
         +tableName() String
@@ -371,244 +472,140 @@ classDiagram
     Serializable <|.. PredictionStepDto
     Serializable <|.. TreeResponseDto
     Serializable <|.. PredictRequestDto
-    TreeResponseDto o-- PredictionStepDto : rootStep
+    TreeResponseDto o-- "1" PredictionStepDto : rootStep
 ```
 
-## 7. Diagramma UML delle Classi — Componenti Spring Boot REST e Vaadin Flow
-
-```mermaid
-classDiagram
-    class ServerApplication {
-        +main(args: String[])$ void
-    }
-
-    class TreeService {
-        -Map~String,RegressionTree~ activeTrees
-        +learnFromDb(tableName: String) TreeResponseDto
-        +loadFromFile(tableName: String) TreeResponseDto
-        +predictStep(tableName: String, path: List~Integer~) PredictionStepDto
-    }
-
-    class TreeController {
-        -TreeService treeService
-        +TreeController(treeService: TreeService)
-        +learn(request: TreeRequestDto) ResponseEntity
-        +load(request: TreeRequestDto) ResponseEntity
-        +predict(request: PredictRequestDto) ResponseEntity
-    }
-
-    class GlobalExceptionHandler {
-        +handleNotFound(ex: Exception) ResponseEntity
-        +handleBadRequest(ex: Exception) ResponseEntity
-    }
-
-    class ClientApplication {
-        +main(args: String[])$ void
-    }
-
-    class TreeRestClientService {
-        -RestClient restClient
-        +TreeRestClientService(builder: RestClient.Builder)
-        +learnTree(tableName: String) TreeResponseDto
-        +loadTree(tableName: String) TreeResponseDto
-        +predictStep(tableName: String, path: List~Integer~) PredictionStepDto
-    }
-
-    class MainView {
-        -TreeRestClientService service
-        -TextField tableField
-        -TextArea rulesArea
-        -VerticalLayout predictLayout
-        -List~Integer~ currentPath
-        +MainView(service: TreeRestClientService)
-        -learnAction() void
-        -loadAction() void
-        -updatePredictionView(step: PredictionStepDto) void
-    }
-
-    TreeController --> TreeService : delega business logic
-    TreeService o-- "0..*" RegressionTree : cache activeTrees
-    MainView --> TreeRestClientService : chiama REST
-    TreeRestClientService ..> TreeController : HTTP POST JSON
-    VerticalLayout <|-- MainView
-```
-
-## 8. Diagramma UML Panoramico delle Relazioni tra Classi Principali
-
-```mermaid
-classDiagram
-    class RegressionTree {
-        -Node root
-        -RegressionTree[] childTree
-        +RegressionTree(trainingSet: Data)
-        +predictClass(out, in) Double
-        +navigate(path) PredictionStepDto
-    }
-
-    class Node {
-        <<abstract>>
-        -double variance
-        ~getNumberOfChildren()* int
-    }
-
-    class LeafNode {
-        -Double predictedClassValue
-    }
-
-    class SplitNode {
-        <<abstract>>
-        -Attribute attribute
-        #List~SplitInfo~ mapSplit
-    }
-
-    class SplitInfo {
-        -Object splitValue
-        -String comparator
-    }
-
-    class Data {
-        -List~Example~ data
-        -List~Attribute~ explanatorySet
-        -ContinuousAttribute classAttribute
-    }
-
-    class Attribute {
-        <<abstract>>
-        -String name
-    }
-
-    class DbAccess {
-        -Connection conn
-        +initConnection() void
-    }
-
-    class TableData {
-        +getTransazioni(table) List
-    }
-
-    class ServerOneClient {
-        +run() void
-    }
-
-    class MainView {
-        +MainView(service)
-    }
-
-    class TreeController {
-        +predict(request) ResponseEntity
-    }
-
-    Node <|-- LeafNode
-    Node <|-- SplitNode
-    SplitNode *-- "1..*" SplitInfo : mapSplit
-    SplitNode o-- "1" Attribute : attribute
-    RegressionTree *-- "1" Node : root
-    RegressionTree *-- "0..*" RegressionTree : childTree
-    Data *-- "1..*" Attribute : explanatorySet
-    TableData o-- "1" DbAccess : db
-    ServerOneClient ..> RegressionTree : uses
-    MainView ..> TreeController : REST HTTP
-    TreeController ..> RegressionTree : navigates
-```
-
-## 9. Diagramma di Sequenza UML — Protocollo Socket Multi-Client
+## 8. Diagramma di Sequenza 1: Apprendimento e Navigazione REST Stateless (Spring Boot 8080)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Utente
-    participant Client as Client Main
-    participant Server as ServerOneClient
-    participant Tree as RegressionTree
-    participant DB as DbAccess / MySQL
-
-    Utente->>Client: Scelta 1: Apprendi da DB
-    Client->>Server: Invia comando 0 + tableName
-    Server->>DB: SELECT * FROM tableName
-    DB-->>Server: Righe del training set
-    Server-->>Client: OK
-    Client->>Server: Invia comando 1 (learn)
-    Server->>Tree: new RegressionTree(data)
-    Server->>Tree: tree.salva(tableName.dmp)
-    Server-->>Client: OK
-    Client->>Server: Invia comando 3 (predict)
-    loop Fino a LeafNode
-        Server->>Tree: predictClass(out, in)
-        Tree-->>Client: QUERY (opzioni dello split)
-        Client->>Utente: Mostra condizioni
-        Utente->>Client: Inserisce ramo (es. 0 o 1)
-        Client->>Tree: Invia indice del ramo
-    end
-    Tree-->>Server: Restituisce valore predetto
-    Server-->>Client: OK + predictedValue
-    Client->>Utente: Visualizza valore predetto
-```
-
-## 10. Diagramma di Sequenza UML — Protocollo REST Stateless (Spring Boot + Vaadin Flow)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Utente
-    participant UI as MainView (Vaadin 8081)
-    participant RESTClient as TreeRestClientService
+    actor Client as Client HTTP / cURL
     participant Controller as TreeController (8080)
     participant Service as TreeService
-    participant Tree as RegressionTree
     participant DB as MySQL MapDB
+    participant Tree as RegressionTree
+    participant Disk as File System (.dmp)
 
-    Utente->>UI: Clicca 'Apprendi da Database' (tableName)
-    UI->>RESTClient: learnTree(tableName)
-    RESTClient->>Controller: POST /api/trees/learn (JSON)
-    Controller->>Service: learnFromDb(tableName)
-    Service->>DB: Query dati tabella
-    DB-->>Service: Dati training set
+    Client->>Controller: POST /api/trees/learn {"tableName": "provaC"}
+    Controller->>Service: learnFromDb("provaC")
+    Service->>DB: Query dati tabella 'provaC'
+    DB-->>Service: Recordset tuple di training
     Service->>Tree: new RegressionTree(data)
-    Service->>Tree: tree.navigate([]) -> rootStep
-    Service-->>Controller: TreeResponseDto (rules + rootStep)
-    Controller-->>RESTClient: 200 OK (JSON)
-    RESTClient-->>UI: TreeResponseDto
-    UI->>Utente: Mostra regole e pulsanti primo split
+    Service->>Disk: tree.salva("provaC.dmp")
+    Service->>Service: activeTrees.put("provaC", tree)
+    Service->>Tree: tree.navigate([])
+    Tree-->>Service: PredictionStepDto (radice: attributeName, branchOptions)
+    Service-->>Controller: TreeResponseDto ("provaC", treeRules, rootStep)
+    Controller-->>Client: 200 OK (TreeResponseDto JSON)
 
-    Utente->>UI: Clicca ramo split (es. ramo 1)
-    UI->>RESTClient: predictStep(tableName, [1])
-    RESTClient->>Controller: POST /api/trees/predict (JSON)
-    Controller->>Service: predictStep(tableName, [1])
+    Client->>Controller: POST /api/trees/predict {"tableName": "provaC", "path": [1]}
+    Controller->>Service: predictStep("provaC", [1])
+    Service->>Service: activeTrees.get("provaC")
     Service->>Tree: tree.navigate([1])
-    Tree-->>Service: PredictionStepDto (isLeaf=true, value=1.5)
+    Tree-->>Service: PredictionStepDto (isLeaf=true, predictedValue=42.5)
     Service-->>Controller: PredictionStepDto
-    Controller-->>RESTClient: 200 OK (JSON)
-    RESTClient-->>UI: PredictionStepDto
-    UI->>Utente: Mostra badge risultato predetto
+    Controller-->>Client: 200 OK (PredictionStepDto JSON)
 ```
 
-## 11. Diagramma di Deployment UML — Architettura Three-Tier
+## 9. Diagramma di Sequenza 2: Interazione Web UI Vaadin Flow (Porta 8081)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Utente as Utente Web
+    participant UI as MainView (Vaadin 8081)
+    participant RESTClient as TreeRestClientService
+    participant Backend as REST Controller (8080)
+
+    Utente->>UI: Inserisce "provaC" in tableNameField e clicca learnBtn
+    UI->>RESTClient: learnTree("provaC")
+    RESTClient->>Backend: POST /api/trees/learn {"tableName": "provaC"}
+    Backend-->>RESTClient: 200 OK (TreeResponseDto)
+    RESTClient-->>UI: TreeResponseDto
+    UI->>UI: rulesArea.setValue(treeRules)
+    UI->>UI: renderStep(rootStep) -> popola pulsanti opzioni split
+    UI->>Utente: Mostra regole e rami del nodo radice
+
+    Utente->>UI: Clicca pulsante ramo (es. indice 1)
+    UI->>UI: currentPath.add(1)
+    UI->>RESTClient: predictStep("provaC", [1])
+    RESTClient->>Backend: POST /api/trees/predict {"tableName": "provaC", "path": [1]}
+    Backend-->>RESTClient: 200 OK (PredictionStepDto)
+    RESTClient-->>UI: PredictionStepDto
+    UI->>UI: renderStep(step) -> rileva isLeaf == true
+    UI->>Utente: Visualizza badge risultato predetto e riepilogo
+```
+
+## 10. Diagramma di Sequenza 3: Protocollo Socket TCP Legacy (CLI - Porta 8080)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Utente as Utente Console
+    participant CLI as Main (Client CLI)
+    participant KB as Keyboard
+    participant Server as ServerOneClient (8080)
+    participant DB as MySQL MapDB
+    participant Tree as RegressionTree
+    participant Disk as File System (.dmp)
+
+    Utente->>KB: readInt() -> Scelta 1 (Apprendi da DB)
+    Utente->>KB: readString() -> tableName "provaC"
+    CLI->>Server: out.writeObject(0) [comando acquisizione]
+    CLI->>Server: out.writeObject("provaC")
+    Server->>DB: Query dati tabella 'provaC'
+    DB-->>Server: Righe del training set
+    Server-->>CLI: in.readObject() -> "OK"
+
+    CLI->>Server: out.writeObject(1) [comando apprendimento]
+    Server->>Tree: new RegressionTree(data)
+    Server->>Disk: tree.salva("provaC.dmp")
+    Server-->>CLI: in.readObject() -> "OK"
+
+    Utente->>KB: readInt() -> Scelta 3 (Predizione)
+    CLI->>Server: out.writeObject(3) [comando predizione]
+    Server->>Tree: tree.predictClass(out, in)
+    loop Fino a LeafNode
+        Tree-->>CLI: in.readObject() -> stringa condizioni split
+        CLI->>Utente: Visualizza query e opzioni del ramo
+        Utente->>KB: readInt() -> inserisce indice ramo
+        CLI->>Tree: out.writeObject(ramoScelto)
+    end
+    Tree-->>Server: return Double predictedValue
+    Server-->>CLI: out.writeObject("OK")
+    Server-->>CLI: out.writeObject(predictedValue)
+    CLI->>Utente: Visualizza valore predetto a console
+```
+
+## 11. Diagramma di Deployment / Componenti (Porte 8080, 8081, 3306 MySQL MapDB)
 
 ```mermaid
 flowchart TB
-    subgraph ClientHost ["Client Tier (Host Utente)"]
-        Browser["Web Browser (Vaadin UI)<br/>http://localhost:8081"]
-        CLI["Java Console Client<br/>(Main + Keyboard)"]
+    subgraph ClientHost ["Client Tier (Host Utente / Frontend)"]
+        Browser["Web Browser (UI Vaadin Flow)<br/>http://localhost:8081"]
+        ClientApp["Spring Boot Web Client (Porta 8081)<br/>ClientApplication, MainView, TreeRestClientService"]
+        CLIClient["Java CLI Client (Console)<br/>Main, Keyboard"]
     end
 
-    subgraph ServerHost ["Logic Tier (Server Host)"]
+    subgraph ServerHost ["Logic Tier (Server Host / Backend)"]
         direction TB
-        Tomcat["Spring Boot Embedded Tomcat<br/>Porta 8080"]
-        REST["REST API Controller<br/>/api/trees/* + Swagger UI"]
-        Service["TreeService (In-Memory Cache)"]
-        SocketServer["MultiServer Socket<br/>Porta 8080"]
-        Tomcat --> REST --> Service
+        Tomcat["Spring Boot Embedded Tomcat (Porta 8080)<br/>ServerApplication, TreeController, TreeService, GlobalExceptionHandler"]
+        SocketServer["MultiServer Socket TCP (Porta 8080)<br/>MultiServer, ServerOneClient"]
+        TreeEngine["Regression Tree Engine<br/>RegressionTree, Data, DbAccess, TableData, TableSchema"]
+        Tomcat --> TreeEngine
+        SocketServer --> TreeEngine
     end
 
-    subgraph DataHost ["Data Tier (Database Host)"]
-        MySQL["MySQL Database Server 8.x<br/>Porta 3306 (MapDB)"]
+    subgraph DataHost ["Data Tier (Storage Host / Database)"]
+        MySQL["MySQL Database Server 8.x (Porta 3306)<br/>Database: MapDB | Utente: MapUser"]
         Disk["File System Locale<br/>Archivi serializzati (*.dmp)"]
     end
 
-    Browser -->|HTTP / JSON :8081| Tomcat
-    CLI -->|TCP Socket :8080| SocketServer
-    Service -->|JDBC Driver com.mysql.cj.jdbc.Driver| MySQL
-    Service -->|File I/O ObjectStreams| Disk
+    Browser -->|HTTP / WebSocket :8081| ClientApp
+    ClientApp -->|HTTP REST POST / JSON :8080| Tomcat
+    CLIClient -->|TCP Socket ObjectStreams :8080| SocketServer
+    TreeEngine -->|JDBC Driver com.mysql.cj.jdbc.Driver :3306| MySQL
+    TreeEngine -->|File I/O ObjectStreams| Disk
     SocketServer -->|File I/O ObjectStreams| Disk
-    SocketServer -->|JDBC Connection| MySQL
 ```

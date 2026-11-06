@@ -15,13 +15,13 @@ L'architettura del software adotta il classico modello a tre livelli (**Three-Ti
 
 ```mermaid
 graph TD
-    subgraph Tier 1: Client Presentation Layer
+    subgraph Tier1 ["Tier 1: Client Presentation Layer"]
         CLI[Client Console Application - Client.Main]
         KB[Keyboard Utility - utility.Keyboard]
         CLI --> KB
     end
 
-    subgraph Tier 2: Server Application Layer
+    subgraph Tier2 ["Tier 2: Server Application Layer"]
         MS[MultiServer - TCP Listener Port 8080]
         SOC[ServerOneClient - Thread Worker]
         RT[RegressionTree Engine - tree.*]
@@ -32,7 +32,7 @@ graph TD
         RT --> DATA
     end
 
-    subgraph Tier 3: Data Persistence Layer
+    subgraph Tier3 ["Tier 3: Data Persistence Layer"]
         DBA[DbAccess - JDBC Manager]
         TS[TableSchema & TableData - database.*]
         MYSQL[(MySQL Database - MapDB)]
@@ -44,7 +44,7 @@ graph TD
         RT -. Java Serialization .-> FS
     end
 
-    CLI <== TCP Socket / Object Streams ==> SOC
+    CLI <-->|"TCP Socket / Object Streams"| SOC
 ```
 
 ### 1.1 Separazione delle Responsabilità (Separation of Concerns)
@@ -66,7 +66,7 @@ graph TD
 ### 1.2 Modularità Maven
 
 Il progetto è strutturato secondo le best practice di Apache Maven con configurazione multi-modulo gerarchica:
-- **`pom.xml` (Root Aggregator):** definisce la versione target di Java (Java 25), le proprietà di codifica sorgente UTF-8 e la configurazione centralizzata di `maven-javadoc-plugin` (versione 3.11.2) con visibilità `private` e doclint disabilitato per produrre la documentazione aggregata dell'intero sistema.
+- **`pom.xml` (Root Aggregator):** definisce la versione target di Java (Java 21 LTS — bytecode release target 21), le proprietà di codifica sorgente UTF-8 e la configurazione centralizzata di `maven-javadoc-plugin` (versione 3.11.2) con visibilità `private` e doclint disabilitato per produrre la documentazione aggregata dell'intero sistema.
 - **`Server/pom.xml`:** modulo contenente il motore matematico, il server socket multithread, il package di connessione al database MySQL (dipendenza `com.mysql:mysql-connector-j:8.4.0`) e la gestione delle eccezioni.
 - **`Client/pom.xml`:** modulo standalone contenente l'interfaccia a riga di comando per la connessione remota e le utilità di acquisizione da tastiera.
 
@@ -277,10 +277,10 @@ Il protocollo è strutturato attorno a quattro codici di comando numerici inviat
 sequenceDiagram
     autonumber
     actor Utente
-    participant Client as Client.Main
-    participant Server as ServerOneClient
-    participant Engine as RegressionTree Engine
-    participant DB as MySQL MapDB
+    participant Client as "Client.Main"
+    participant Server as "ServerOneClient"
+    participant Engine as "RegressionTree Engine"
+    participant DB as "MySQL MapDB"
 
     Note over Client,Server: Connessione Socket TCP stabilita (porta 8080)
 
@@ -398,25 +398,25 @@ In aggiunta all'infrastruttura socket TCP nativa, il sistema include un'estensio
 
 ```mermaid
 graph TB
-    subgraph Client Tier: Web Browser & Vaadin Flow
+    subgraph TierClient ["Client Tier: Web Browser & Vaadin Flow"]
         UI[Vaadin Flow Responsive UI - MainView :8081]
         RCS[TreeRestClientService - Spring RestClient]
         UI --> RCS
     end
 
-    subgraph Server Tier: Spring Boot 3.4 REST API :8080
+    subgraph TierServer ["Server Tier: Spring Boot 3.4 REST API :8080"]
         TC[TreeController - REST Endpoints]
         TS[TreeService - Concurrent In-Memory Cache]
         GEH[GlobalExceptionHandler - @RestControllerAdvice]
         DOC[SpringDoc OpenAPI 3 / Swagger UI]
         
-        RCS <== HTTP/JSON POST ==> TC
+        RCS <-->|"HTTP/JSON POST"| TC
         TC --> TS
         TC -.-> GEH
         TC -.-> DOC
     end
 
-    subgraph Core Engine Tier: Algoritmo e Persistenza
+    subgraph TierCore ["Core Engine Tier: Algoritmo e Persistenza"]
         RT[RegressionTree - Stateless Navigation: navigate]
         DATA[Data Layer & MySQL MapDB]
         FS[(Local Storage: .dmp Files)]
@@ -473,4 +473,106 @@ Il modulo `Client` include un frontend web moderno in puro Java con **Vaadin Flo
   - Sezione di visualizzazione con `TextArea` a larghezza intera per consultare la struttura dell'albero e le regole decisionali IF-THEN estratte.
   - Pannello di predizione interattivo: visualizza dinamicamente l'attributo di split corrente e crea pulsanti cliccabili per ciascun ramo figlio (es. `[=A]`, `[=B]` oppure `[<=2.0]`, `[>2.0]`).
   - Al raggiungimento della foglia, presenta in evidenza con badge grafico il valore numerico continuo predetto e un pulsante per avviare una nuova predizione.
+
+
+
+
+
+---
+
+
+
+## 7. Qualità del Software, Incapsulamento OOP e Documentazione Javadoc
+
+
+
+Il progetto adotta standard rigorosi di Ingegneria del Software e Programmazione Orientata agli Oggetti (OOP):
+
+
+
+### 7.1 Incapsulamento Rigoroso e Visibilità
+
+- **Campi Dati Privati (`private`):** Tutti gli attributi di stato di tutte le classi dell'intero codebase sono stati dichiarati `private`. L'accesso allo stato avviene esclusivamente tramite opportuni metodi getter pubblici o package-private.
+
+- **Visibilità Protetta Mirata (`protected`):** L'unica eccezione conforme ai canoni della programmazione ad oggetti riguarda il campo `protected List<SplitInfo> mapSplit` nella classe astratta `tree.SplitNode`, necessario per consentire l'accesso diretto e polimorfico alle sottoclassi concrete `DiscreteNode` e `ContinuousNode`.
+
+- **Costruttori Espliciti e Documentati:** Ogni classe istanziabile dichiara un costruttore esplicito con documentazione Javadoc analitica (`ServerApplication`, `ClientApplication`, `Main`, `DbAccess`, `Example`, `TreeService`, `GlobalExceptionHandler`).
+
+- **Costruttori Privati per Classi di Utilità ed Entrypoint Statici:** Le classi che fungono da raccolta di funzioni statiche (`utility.Keyboard`) o da entrypoint (`server.Main`) dichiarano un costruttore privato esplicito per prevenire l'istanziamento improprio.
+
+- **Serializzazione e Integrità dei Dati (`serialVersionUID`):** Tutte le entità serializzabili (`Attribute`, `ContinuousAttribute`, `DiscreteAttribute`, `Node`, `LeafNode`, `SplitNode`, `ContinuousNode`, `DiscreteNode`, `SplitNode.SplitInfo`, `RegressionTree`), le eccezioni di dominio (`TrainingDataException`, `DatabaseConnectionException`, `EmptySetException`, `UnknownValueException`) e tutti i Record DTO (`TreeRequestDto`, `TreeResponseDto`, `PredictRequestDto`, `PredictionStepDto`) dichiarano esplicitamente `private static final long serialVersionUID = 1L;`.
+
+- **Eliminazione delle Deprecazioni:** Nella classe `utility.Keyboard`, i costruttori deprecati di `Float` e `Double` sono stati sostituiti con `Float.parseFloat()` e `Double.parseDouble()`, e il parsing booleano impiega `equalsIgnoreCase()`.
+
+
+
+### 7.2 Documentazione di Package (`package-info.java`)
+
+Ciascun package architetturale (`data`, `database`, `tree`, `server`, `utility`, `Client`, `dto`) include un file `package-info.java` completo che descrive formalmente:
+
+- Il ruolo e le responsabilità del modulo nell'architettura a tre livelli e nell'estensione Web;
+
+- Le classi e interfacce principali contenute;
+
+- Le interazioni e i flussi informativi verso gli altri package.
+
+
+
+### 7.3 Configurazione Javadoc Aggregato con Visibilità Private
+
+La configurazione del plugin Maven `maven-javadoc-plugin` nel root `pom.xml` è impostata con:
+
+- `<show>private</show>`: consente la generazione della documentazione completa che include non solo le API pubbliche, ma anche i nodi package-private dell'albero di regressione (`Node`, `SplitNode`, `LeafNode`, `DiscreteNode`, `ContinuousNode`, `SplitInfo`), i campi dati privati e i metodi ausiliari.
+
+- Documentazione aggregata multi-modulo generabile tramite `mvn javadoc:aggregate`, consultabile direttamente a partire da `docs/javadoc/index.html`.
+
+
+
+---
+
+
+
+## 8. Strategia di Testing e Validazione Sperimentale
+
+
+
+La correttezza matematica, la robustezza e la conformità architetturale del sistema sono certificate da una suite di **55 test automatizzati** eseguiti tramite JUnit 5, Mockito e Spring Boot Test:
+
+
+
+### 8.1 Struttura della Suite di Test
+
+1. **Modulo Client (11 test):**
+
+   - `utility.KeyboardTest` (7 test): validazione isolata dell'acquisizione di tutti i tipi primitivi (`String`, `boolean`, `char`, `int`, `long`, `float`, `double`), gestione errori e reset buffer tramite reflection.
+
+   - `Client.TreeRestClientServiceTest` (4 test): collaudo del client REST basato su Spring `RestClient` mediante `MockRestServiceServer`, con verifica delle chiamate POST `/learn`, `/load`, `/predict` e dell'estrazione dei messaggi d'errore JSON.
+
+2. **Modulo Server (44 test):**
+
+   - `data.AttributeTest` (6 test): verifica gerarchia `Attribute`, deduplicazione in `TreeSet` per attributi discreti e serializzazione binaria.
+
+   - `data.DataTest` (11 test): test di integrazione nominale con MySQL `MapDB.provaC`, quicksort in-place polimorfico e casi d'errore (mock di tabelle con meno di 2 colonne, target non numerico, valori nulli).
+
+   - `database.DatabasePackageTest` (8 test): introspezione metadati JDBC, ciclo di vita della connessione `DbAccess`, estrazione transazioni `TableData` e mapping `Column`/`Example`.
+
+   - `tree.TreeNodesAndAlgorithmTest` (10 test): verifica analitica del calcolo matematico $SSE$ a singola passata, partizionamento discreto e continuo, soglie ottime, induzione completa, serializzazione `.dmp` e predizione interattiva con flussi binari.
+
+   - `server.SocketClientServerIntegrationTest` (3 test): test end-to-end su socket TCP reale con porta effimera per i flussi completi di addestramento, caricamento da archivio e gestione errori.
+
+   - `server.EndToEndRestAndClientIntegrationTest` (5 test): test end-to-end su backend Spring Boot REST (`@SpringBootTest(webEnvironment = RANDOM_PORT)`), validando gli endpoint REST, la navigazione stateless lungo l'albero, la gestione errori semantica (HTTP 400/404) e la disponibilità delle specifiche OpenAPI 3 e Swagger UI.
+
+
+
+### 8.2 Risultati del Testing
+
+- **Test Totali Eseguiti:** 55
+
+- **Fallimenti (Failures):** 0
+
+- **Errori (Errors):** 0
+
+- **Tasso di Successo:** 100%
+
+- Per la matrice completa di tracciabilità requisiti e le schede tecniche dettagliate, consultare [docs/documentazione-test.md](documentazione-test.md).
 

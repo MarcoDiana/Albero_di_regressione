@@ -13,7 +13,7 @@ Prima di procedere all'installazione e all'avvio del software, assicurarsi che l
 
 | Componente | Versione Richiesta | Note e Verifica |
 |---|---|---|
-| **Java Development Kit (JDK)** | **Java 25** (o Java 21+ LTS) | Verificare con `java -version` e `javac -version`. Consigliata la distribuzione Eclipse Temurin. |
+| **Java Development Kit (JDK)** | **Java 21 LTS** (o Java 21+ LTS) | Verificare con `java -version` e `javac -version`. Consigliata la distribuzione Eclipse Temurin. |
 | **Apache Maven** | **3.9.x** o superiore | Verificare con `mvn -version`. Necessario per la compilazione e la risoluzione automatica delle dipendenze. |
 | **MySQL Server** | **8.0.x** o **8.4.x** | In ascolto sulla porta predefinita `3306`. |
 | **IntelliJ IDEA** *(Opzionale)* | Ultimate o Community (2024.x+) | Consigliato per l'importazione automatica del progetto Maven e l'esecuzione tramite IDE. |
@@ -146,27 +146,30 @@ INSERT INTO servo (motor, screw, pgain, vgain, class) VALUES
 #### 1. Compilazione del Progetto
 Posizionarsi nella cartella radice del progetto:
 ```bash
-cd "c:\Users\marco\OneDrive\Desktop\progetti\Albero di regressione (Java)"
+cd <directory-del-progetto>
 mvn clean compile
 ```
 Il comando compila tutti i sorgenti Java di `Server` e `Client`.
 
 #### 2. Avvio del Server
-In un primo terminale (PowerShell o Prompt dei Comandi), avviare il Server:
+In un primo terminale (PowerShell o Prompt dei Comandi), avviare il Server da riga di comando tramite Maven:
 ```powershell
-# Esecuzione diretta con classpath comprensivo delle dipendenze Maven
-java -cp "Server/target/classes;C:/Users/marco/.m2/repository/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar" Main
+cd Server
+mvn compile exec:java -Dexec.mainClass="Main"
 ```
+*(Oppure dalla radice del progetto: `mvn -pl Server compile exec:java -Dexec.mainClass="Main"`)*
 Il Server visualizzerà:
 ```text
 Server is listening on port 8080
 ```
 
 #### 3. Avvio del Client
-In un secondo terminale separato, avviare il Client:
+In un secondo terminale separato, avviare il Client da riga di comando:
 ```powershell
-java -cp "Client/target/classes" Client.Main
+cd Client
+mvn compile exec:java -Dexec.mainClass="Client.Main"
 ```
+*(Oppure dalla radice del progetto: `mvn -pl Client compile exec:java -Dexec.mainClass="Client.Main"`)*
 Il Client si collegherà immediatamente al Server locale sulla porta `8080` mostrando il prompt interattivo.
 
 ---
@@ -187,6 +190,25 @@ Grazie alla configurazione nativa Maven, eseguire l'applicazione da IntelliJ IDE
      `Client > src > main > java > Client > Main.java`
    - Cliccare con il tasto destro e selezionare **Run 'Client.Main.main()'**.
    - Interagire direttamente nella console integrata di IntelliJ IDEA.
+
+---
+
+
+### 4.3 Validazione dell'Installazione tramite Test Automatizzati
+
+Per verificare istantaneamente che l'ambiente sia pronto, che il database MySQL `MapDB` sia raggiungibile e che tutti i moduli siano operativi al 100%, è possibile eseguire l'intera suite di test automatizzati:
+
+```bash
+mvn clean test
+```
+
+L'output confermerà l'esecuzione con successo di **55 test** (11 nel modulo Client e 44 nel modulo Server) con **0 fallimenti e 0 errori**:
+```text
+[INFO] Results:
+[INFO] Tests run: 55, Failures: 0, Errors: 0, Skipped: 0
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+```
 
 ---
 
@@ -302,13 +324,15 @@ Oltre alla tradizionale interfaccia a riga di comando (CLI), il sistema include 
 Aprire un terminale nella cartella radice del progetto ed eseguire:
 
 ```bash
+# Opzione 1: Posizionandosi nella sottocartella Server
+cd Server
+mvn spring-boot:run
+
+# Opzione 2: Dalla radice del progetto multi-modulo
 mvn -pl Server spring-boot:run
 ```
 
-Oppure avviando la classe `server.ServerApplication` da IntelliJ IDEA o compilando ed eseguendo direttamente:
-```bash
-java -cp "Server/target/classes;C:/Users/marco/.m2/repository/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar" server.ServerApplication
-```
+*(In alternativa, è possibile avviare direttamente la classe `server.ServerApplication` da IntelliJ IDEA).*
 
 *Output atteso:*
 ```text
@@ -323,13 +347,15 @@ Started ServerApplication in ... seconds
 In un secondo terminale, eseguire:
 
 ```bash
+# Opzione 1: Posizionandosi nella sottocartella Client
+cd Client
+mvn spring-boot:run
+
+# Opzione 2: Dalla radice del progetto multi-modulo
 mvn -pl Client spring-boot:run
 ```
 
-Oppure avviando la classe `Client.ClientApplication` da IntelliJ IDEA o riga di comando:
-```bash
-java -cp "Client/target/classes" Client.ClientApplication
-```
+*(In alternativa, è possibile avviare direttamente la classe `Client.ClientApplication` da IntelliJ IDEA).*
 
 *Output atteso:*
 ```text

@@ -1,6 +1,6 @@
 # Albero di Regressione (Java)
 
-[![Java 25](https://img.shields.io/badge/Java-25-orange.svg)](https://openjdk.org/)
+[![Java 21 LTS](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://openjdk.org/)
 [![Maven Build](https://img.shields.io/badge/Maven-3.9+-blue.svg)](https://maven.apache.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Vaadin](https://img.shields.io/badge/Vaadin%20Flow-24.6.4-00b4f0.svg)](https://vaadin.com/)
@@ -55,12 +55,12 @@ Il software affronta problemi di regressione numerica supervisionata:
 
 ```mermaid
 graph TB
-    subgraph Frontend Tier
+    subgraph FrontendTier ["Frontend Tier"]
         CLI[Client Console - Client.Main]
         WEB[Vaadin Flow Web UI :8081 - Client.ClientApplication]
     end
 
-    subgraph Backend Tier
+    subgraph BackendTier ["Backend Tier"]
         MS[MultiServer - Socket Listener :8080]
         REST[Spring Boot REST API :8080 - TreeController]
         SWAGGER[Swagger UI / OpenAPI 3 :8080]
@@ -71,15 +71,15 @@ graph TB
         REST -.-> SWAGGER
     end
 
-    subgraph Data Tier
+    subgraph DataTier ["Data Tier"]
         DB[(MySQL MapDB)]
         FS[(Local Storage: .dmp Archives)]
         RT --> DB
         RT --> FS
     end
 
-    CLI <== TCP Socket ==> MS
-    WEB <== HTTP/JSON RestClient ==> REST
+    CLI <-->|"TCP Socket"| MS
+    WEB <-->|"HTTP/JSON RestClient"| REST
 ```
 
 ---
@@ -139,15 +139,19 @@ mvn clean compile
 
 #### 3.1 Avvio Backend Spring Boot REST API (Porta 8080):
 ```bash
-mvn -pl Server spring-boot:run
+cd Server
+mvn spring-boot:run
+# Oppure dalla root: mvn -pl Server spring-boot:run
 ```
 - **Swagger UI:** `http://localhost:8080/swagger-ui.html`
 - **OpenAPI 3 Spec (JSON):** `http://localhost:8080/v3/api-docs`
 
 #### 3.2 Avvio Frontend Web Vaadin Flow (Porta 8081):
-In un secondo terminale:
+In un secondo terminale separato:
 ```bash
-mvn -pl Client spring-boot:run
+cd Client
+mvn spring-boot:run
+# Oppure dalla root: mvn -pl Client spring-boot:run
 ```
 - **Interfaccia Web:** `http://localhost:8081`
 
@@ -155,13 +159,17 @@ mvn -pl Client spring-boot:run
 
 #### Avvio del Server Socket:
 ```bash
-java -cp "Server/target/classes;C:/Users/marco/.m2/repository/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar" Main
+cd Server
+mvn compile exec:java -Dexec.mainClass="Main"
+# Oppure dalla root: mvn -pl Server compile exec:java -Dexec.mainClass="Main"
 ```
 
 #### Avvio del Client Console:
-In un altro terminale:
+In un secondo terminale:
 ```bash
-java -cp "Client/target/classes" Client.Main
+cd Client
+mvn compile exec:java -Dexec.mainClass="Client.Main"
+# Oppure dalla root: mvn -pl Client compile exec:java -Dexec.mainClass="Client.Main"
 ```
 
 ### 5. Esecuzione dei Test Automatizzati
@@ -176,15 +184,14 @@ mvn clean test
 
 ## Generazione della Documentazione (PDF e Javadoc)
 
-È possibile rigenerare l'intera documentazione tecnica e i file PDF ad alta risoluzione eseguendo lo script PowerShell dedicato:
+La documentazione API tecnica Javadoc aggregata di entrambi i moduli (inclusiva di tutti i dettagli privati e dei nodi package-private) può essere generata tramite Maven:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/build-docs.ps1
+```bash
+mvn javadoc:aggregate
 ```
 
-Lo script esegue:
-1. `mvn javadoc:aggregate` per compilare il Javadoc aggregato con visibilità `private` in `docs/javadoc/`.
-2. Rendering vettoriale dei PDF ad alta risoluzione in `docs/pdf/` per `guida-tecnica.pdf`, `guida-utente-installazione.pdf` e `README.pdf`.
+L'albero HTML risultante è situato in `docs/javadoc/` e può essere consultato aprendo `docs/javadoc/index.html` con qualsiasi browser.
+Le versioni ad alta definizione pronte per la stampa e la consultazione offline sono archiviate in formato vettoriale in `docs/pdf/`.
 
 ---
 
@@ -192,31 +199,37 @@ Lo script esegue:
 
 ```text
 .
-├── Client/                     # Modulo Client a riga di comando
-│   ├── pom.xml                 # Configurazione Maven del client
-│   └── src/main/java/
-│       ├── Client/             # Main.java (punto di ingresso CLI)
-│       └── utility/            # Keyboard.java (gestione robusta input da console)
-├── Server/                     # Modulo Server e Motore di Regressione
-│   ├── pom.xml                 # Dipendenze (mysql-connector-j 8.4.0)
-│   └── src/main/java/
-│       ├── Main.java           # Entrypoint Server (avvio MultiServer su porta 8080)
-│       ├── data/               # Strutture dati: Data, Attribute, DiscreteAttribute, ContinuousAttribute
-│       ├── database/           # Accesso JDBC: DbAccess, TableSchema, TableData, Example, Column
-│       ├── server/             # Networking: MultiServer, ServerOneClient, eccezioni
-│       └── tree/               # Motore ad albero: RegressionTree, Node, SplitNode, LeafNode, ...
-├── docs/                       # Documentazione completa di progetto
-│   ├── guida-tecnica.md        # Guida Tecnica Completa
-│   ├── guida-utente-installazione.md # Guida Utente ed Esempi
-│   ├── javadoc/                # Javadoc HTML aggregato (apidocs)
-│   └── pdf/                    # Versioni PDF ad alta risoluzione
+├── Client/                             # Modulo Client (Console CLI + Web Vaadin Flow)
+│   ├── pom.xml                         # Dipendenze (Vaadin 24.6.4, Spring Boot Web)
+│   ├── src/main/java/
+│   │   ├── Client/                     # ClientApplication.java, Main.java, MainView.java, TreeRestClientService.java
+│   │   ├── dto/                        # Record DTO immutabili per REST
+│   │   └── utility/                    # Keyboard.java (input da console)
+│   └── src/test/java/                  # Suite di test modulo Client (11 test)
+├── Server/                             # Modulo Server (Socket TCP + Backend REST API)
+│   ├── pom.xml                         # Dipendenze (Spring Boot, MySQL Connector 8.4.0, OpenAPI)
+│   ├── src/main/java/
+│   │   ├── Main.java                   # Entrypoint Server Socket (MultiServer su porta 8080)
+│   │   ├── data/                       # Data, Attribute, DiscreteAttribute, ContinuousAttribute
+│   │   ├── database/                   # DbAccess, TableSchema, TableData, Example, Column
+│   │   ├── dto/                        # Record DTO immutabili (TreeRequestDto, PredictionStepDto, ...)
+│   │   ├── server/                     # ServerApplication, TreeController, TreeService, GlobalExceptionHandler, MultiServer
+│   │   └── tree/                       # RegressionTree, Node, SplitNode, LeafNode, DiscreteNode, ContinuousNode
+│   └── src/test/java/                  # Suite di test modulo Server (44 test)
+├── docs/                               # Documentazione completa di progetto
+│   ├── guida-tecnica.md                # Guida Tecnica Completa
+│   ├── guida-utente-installazione.md   # Guida Utente ed Esempi
+│   ├── architettura-uml-oop.md         # 11 Diagrammi UML ufficiali
+│   ├── documentazione-test.md          # Matrice di tracciabilità e schede test
+│   ├── javadoc/                        # Javadoc HTML aggregato (visibilità private completa)
+│   └── pdf/                            # Versioni PDF ad alta definizione dei documenti
 │       ├── guida-tecnica.pdf
 │       ├── guida-utente-installazione.pdf
+│       ├── architettura-uml-oop.pdf
+│       ├── documentazione-test.pdf
 │       └── README.pdf
-├── scripts/
-│   └── build-docs.ps1          # Script PowerShell per rigenerare PDF e Javadoc
-├── pom.xml                     # Root POM aggregator (Java 25, javadoc plugin 3.11.2)
-└── README.md                   # Panoramica e indice principale
+├── pom.xml                             # Root POM aggregator (Java 21 LTS, javadoc aggregate 3.11.2)
+└── README.md                           # Panoramica e indice principale
 ```
 
 ---
