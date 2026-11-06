@@ -23,11 +23,13 @@ public class Main{
 	 * @param args argomenti da riga di comando: indirizzo host del server e porta
 	 */
 	public static void main(String[] args){
-		
+		String host = args.length > 0 ? args[0] : "localhost";
+		int port = args.length > 1 ? Integer.parseInt(args[1]) : 8080;
+
 		InetAddress addr;
 		try {
 			// Verifica che il nome host specificato sia risolvibile.
-			addr = InetAddress.getByName(args[0]);
+			addr = InetAddress.getByName(host);
 		} catch (UnknownHostException e) {
 			System.out.println(e.toString());
 			return;
@@ -37,7 +39,7 @@ public class Main{
 		ObjectInputStream in=null;
 		try {
 			// Crea la connessione e i flussi serializzati usati dal protocollo client-server.
-			socket = new Socket(args[0], new Integer(args[1]).intValue());
+			socket = new Socket(addr, port);
 			System.out.println(socket);		
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in = new ObjectInputStream(socket.getInputStream());

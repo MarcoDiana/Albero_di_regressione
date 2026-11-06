@@ -1,14 +1,18 @@
 package server;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.Socket;
+
+import data.Data;
+import data.TrainingDataException;
+import tree.RegressionTree;
 
 /**
  * Gestisce lo scambio di oggetti con un singolo client in un thread dedicato.
  */
-public class ServerOneClient {
+public class ServerOneClient extends Thread {
     /** Socket connesso al client. */
     private Socket socket;
 
@@ -21,38 +25,86 @@ public class ServerOneClient {
     /**
      * Inizializza i flussi di comunicazione e avvia il thread che gestisce il client.
      *
-     * @param socket socket connesso al client
+     * @param s socket connesso al client
+     * @throws IOException se non è possibile aprire i flussi sul socket
      */
-    public ServerOneClient(Socket socket) {
-        this.socket = socket;
-        try {
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Thread thread = new Thread(this::run);
-        thread.start();
+    public ServerOneClient(Socket s) throws IOException {
+        this.socket = s;
+        this.out = new ObjectOutputStream(socket.getOutputStream());
+        this.in = new ObjectInputStream(socket.getInputStream());
+        start();
     }
 
     /**
-     * Legge le richieste del client, invia una risposta per ciascuna e chiude i flussi
-     * e il socket al termine della comunicazione.
+     * Riscrive il metodo {@code run} della superclasse {@link Thread} al fine di
+     * gestire le richieste del client (acquisizione dati, apprendimento e salvataggio,
+     * caricamento da archivio e predizione).
      */
-    public void run(){
+    @Override
+    public void run() {
+        Data trainingSet = null;
+        RegressionTree tree = null;
+        String tableName = null;
+
         try {
             while (true) {
-                Object request = in.readObject();
-                out.writeObject("Risposta dal server");
+                int decision = (Integer) in.readObject();
+
+                switch (decision) {
+                    case 0:
+                        tableName = (String) in.readObject();
+                        try {
+                            trainingSet = new Data(tableName);
+                            out.writeObject("OK");
+                        } catch (TrainingDataException e) {
+                            out.writeObject(e.toString());
+                        }
+                        break;
+
+                    case 1:
+                        try {
+                            tree = new RegressionTree(trainingSet);
+                            tree.salva(tableName + ".dmp");
+                            out.writeObject("OK");
+                        } catch (IOException e) {
+                            out.writeObject(e.toString());
+                        }
+                        break;
+
+                    case 2:
+                        tableName = (String) in.readObject();
+                        try {
+                            String archiveName = tableName.endsWith(".dmp") ? tableName : tableName + ".dmp";
+                            tree = RegressionTree.carica(archiveName);
+                            out.writeObject("OK");
+                        } catch (IOException | ClassNotFoundException e) {
+                            out.writeObject(e.toString());
+                        }
+                        break;
+
+                    case 3:
+                        try {
+                            Double predictedValue = tree.predictClass(out, in);
+                            out.writeObject("OK");
+                            out.writeObject(predictedValue);
+                        } catch (UnknownValueException e) {
+                            out.writeObject(e.toString());
+                        }
+                        break;
+
+                    default:
+                        out.writeObject("Invalid command: " + decision);
+                        break;
+                }
                 out.flush();
             }
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            // Il client ha chiuso la connessione o si è verificato un errore di comunicazione.
         } finally {
             try {
-                in.close();
-                out.close();
-                socket.close();
+                if (in != null) in.close();
+                if (out != null) out.close();
+                if (socket != null) socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
