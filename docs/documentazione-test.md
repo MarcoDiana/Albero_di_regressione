@@ -80,6 +80,11 @@ La suite è integrata nel ciclo di vita Maven attraverso il plugin `maven-surefi
 | **REQ-CLIENT-02** | `Client` | `Client` | `TreeRestClientServiceTest` | `testLoadTreeSuccess` | Invio POST `/api/trees/load` e deserializzazione `TreeResponseDto` | Unit / Mock Test |
 | **REQ-CLIENT-03** | `Client` | `Client` | `TreeRestClientServiceTest` | `testPredictStepSuccess` | Invio POST `/api/trees/predict` e ricezione foglia continua | Unit / Mock Test |
 | **REQ-CLIENT-04** | `Client` | `Client` | `TreeRestClientServiceTest` | `testErrorHandlingWithJsonMessage` | Estrazione messaggio di errore dal body JSON di risposta HTTP 400 | Error Handling |
+| **REQ-CLIENT-05** | `Client` | `Client` | `TreeMermaidConverterTest` | `testParseRulesNominal` | Parsing regole nominali provaC in condizioni e classe predetta | Unit Test |
+| **REQ-CLIENT-06** | `Client` | `Client` | `TreeMermaidConverterTest` | `testConvertToMermaidNominal` | Generazione diagramma Mermaid graph TD con nodi split e foglie | Unit Test |
+| **REQ-CLIENT-07** | `Client` | `Client` | `TreeMermaidConverterTest` | `testSingleLeafTree` | Gestione albero degenere a foglia singola (senza split) | Unit Test |
+| **REQ-CLIENT-08** | `Client` | `Client` | `TreeMermaidConverterTest` | `testEmptyOrNullInput` | Resilienza a input nulli o vuoti con fallback a grafo vuoto | Unit Test |
+| **REQ-CLIENT-09** | `Client` | `Client` | `TreeMermaidConverterTest` | `testExtractCleanRules` | Estrazione lista regole IF-THEN formattate per rendering a card | Unit Test |
 
 ---
 
@@ -175,9 +180,20 @@ Questa classe collauda in isolamento il client HTTP `TreeRestClientService` tram
 
 ---
 
+
+### 4.9 `Client.TreeMermaidConverterTest`
+Questa classe collauda in isolamento il convertitore e parser visuale delle regole dell'albero:
+- **`testParseRulesNominal`**: valida la scomposizione delle 3 regole di `provaC` estraendo condizioni atomiche (`X=A`, `Y<=2.0`), valori di classe stimati e formulazione IF-THEN.
+- **`testConvertToMermaidNominal`**: accerta che il generatore sintetizzi un grafo Mermaid `graph TD` conforme con nodi di split rettangolari `:::split`, nodi foglia ellittici `:::leaf` ed etichette di bivio su ciascun arco orientato.
+- **`testSingleLeafTree`**: verifica il caso limite di un dataset degenere senza partizioni, producendo un diagramma con la sola foglia e valore stimato.
+- **`testEmptyOrNullInput`**: convalida la robustezza nei confronti di stringhe nulle o vuote restituendo una struttura controllata senza sollevare eccezioni.
+- **`testExtractCleanRules`**: verifica la produzione della lista formattata di regole leggibili utilizzata dal tab delle card visuali.
+
+---
+
 ## 5. Modalità di Esecuzione dei Test
 
-Per eseguire l'intera suite di test automatizzata (55 test) con Maven Surefire:
+Per eseguire l'intera suite di test automatizzata (60 test) con Maven Surefire:
 
 ```powershell
 mvn clean test
@@ -208,7 +224,7 @@ Tutti i test inclusi nella suite vengono eseguiti con successo senza alcun falli
 | Modulo | Classi di Test | Test Totali | Esito | Tempo di Esecuzione Tipico |
 |---|---|:---:|:---:|:---:|
 | **Root** | Aggregatore POM | 0 | SUCCESS | ~0.2 s |
-| **Client** | `KeyboardTest`, `TreeRestClientServiceTest` | 11 | SUCCESS (0 Failures, 0 Errors) | ~1.3 s |
+| **Client** | `KeyboardTest`, `TreeRestClientServiceTest`, `TreeMermaidConverterTest` | 16 | SUCCESS (0 Failures, 0 Errors) | ~1.3 s |
 | **Server** | `AttributeTest`, `DataTest`, `DatabasePackageTest`, `TreeNodesAndAlgorithmTest`, `SocketClientServerIntegrationTest`, `EndToEndRestAndClientIntegrationTest` | 44 | SUCCESS (0 Failures, 0 Errors) | ~16.5 s |
-| **Totale Progetto** | **8 Classi di Test** | **55** | **100% PASS** | **~18 s** |
+| **Totale Progetto** | **8 Classi di Test** | **60** | **100% PASS** | **~18 s** |
 

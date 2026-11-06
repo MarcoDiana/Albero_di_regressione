@@ -536,17 +536,18 @@ La configurazione del plugin Maven `maven-javadoc-plugin` nel root `pom.xml` è 
 
 
 
-La correttezza matematica, la robustezza e la conformità architetturale del sistema sono certificate da una suite di **55 test automatizzati** eseguiti tramite JUnit 5, Mockito e Spring Boot Test:
+La correttezza matematica, la robustezza e la conformità architetturale del sistema sono certificate da una suite di **60 test automatizzati** eseguiti tramite JUnit 5, Mockito e Spring Boot Test:
 
 
 
 ### 8.1 Struttura della Suite di Test
 
-1. **Modulo Client (11 test):**
+1. **Modulo Client (16 test):**
 
    - `utility.KeyboardTest` (7 test): validazione isolata dell'acquisizione di tutti i tipi primitivi (`String`, `boolean`, `char`, `int`, `long`, `float`, `double`), gestione errori e reset buffer tramite reflection.
 
    - `Client.TreeRestClientServiceTest` (4 test): collaudo del client REST basato su Spring `RestClient` mediante `MockRestServiceServer`, con verifica delle chiamate POST `/learn`, `/load`, `/predict` e dell'estrazione dei messaggi d'errore JSON.
+   - `Client.TreeMermaidConverterTest` (5 test): validazione del parser di regole e del generatore di grafi decisionali Mermaid vettoriali per la visualizzazione dell'albero a video.
 
 2. **Modulo Server (44 test):**
 
@@ -566,7 +567,7 @@ La correttezza matematica, la robustezza e la conformità architetturale del sis
 
 ### 8.2 Risultati del Testing
 
-- **Test Totali Eseguiti:** 55
+- **Test Totali Eseguiti:** 60
 
 - **Fallimenti (Failures):** 0
 

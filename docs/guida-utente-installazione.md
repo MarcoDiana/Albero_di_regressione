@@ -202,10 +202,10 @@ Per verificare istantaneamente che l'ambiente sia pronto, che il database MySQL 
 mvn clean test
 ```
 
-L'output confermerà l'esecuzione con successo di **55 test** (11 nel modulo Client e 44 nel modulo Server) con **0 fallimenti e 0 errori**:
+L'output confermerà l'esecuzione con successo di **60 test** (16 nel modulo Client e 44 nel modulo Server) con **0 fallimenti e 0 errori**:
 ```text
 [INFO] Results:
-[INFO] Tests run: 55, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 60, Failures: 0, Errors: 0, Skipped: 0
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 ```
@@ -370,21 +370,20 @@ Una volta avviato, aprire il browser all'indirizzo:
 
 ### 6.4 Guida Passo-Passo all'Interfaccia Grafica Web Vaadin
 
-1. **Selezione Sorgente Dati:**
-   - Tramite il selettore a radio button, scegliere tra:
-     - **"Database MySQL"** (per addestrare un nuovo albero da tabella);
-     - **"File serializzato (.dmp)"** (per caricare un modello salvato in precedenza).
-2. **Inserimento Tabella/File:**
-   - Digitare il nome della tabella desiderata (es. `provaC`).
-   - Cliccare sul pulsante **"Apprendi da Database"** o **"Carica da Archivio"**.
-3. **Visualizzazione di Regole e Albero:**
-   - Nella casella di testo centrale comparirà l'intera struttura dell'albero indotto e tutte le regole di decisione IF-THEN generate.
-4. **Navigazione Guidata per la Predizione:**
-   - Sotto la casella delle regole comparirà il pannello di predizione interattivo.
-   - Verrà mostrato il primo bivio decisionale (es. `Attributo di decisione: X`) con pulsanti cliccabili per ogni partizione (es. `[=A]` o `[=B]`).
-   - Cliccando su un pulsante, il client invierà una richiesta stateless al server per scendere nel ramo scelto.
-   - Se il percorso raggiunge un nodo intermedio (es. `Y`), verranno presentate le nuove opzioni (es. `[<=2.0]` o `[>2.0]`).
-   - Quando viene raggiunta una foglia, l'interfaccia presenterà in evidenza con badge verde il **valore continuo stimato** (es. `Classe Continua Predetta: 10.0`), accompagnato dal pulsante **"Nuova Predizione"** per ripetere il test.
+1. **Inserimento Tabella/File Archivio:**
+   - Nel campo di testo principale, inserire il nome della tabella SQL (es. `provaC`) oppure il nome del file `.dmp` salvato in precedenza.
+   - Cliccare sul pulsante **"Apprendi da DB"** (blu) per addestrare un nuovo albero da MySQL, oppure su **"Carica da File (.dmp)"** (verde) per deserializzare istantaneamente un modello salvato su disco.
+2. **Visualizzazione Multilivello dell'Albero a Schede (TabSheet):**
+   - **Scheda "Diagramma ad Albero" (Icona Cluster):** Visualizza l'albero di decisione come un elegante diagramma vettoriale Mermaid SVG interattivo, con nodi di split rettangolari azzurri, archi orientati con le etichette di partizione (es. `= A`, `<= 2.0`) e nodi foglia terminali ellittici verdi con la classe stimata.
+   - **Scheda "Regole IF-THEN" (Icona Elenco):** Mostra tutte le regole decisionali estratte formattate come card individuali con pill/badge colorati per ogni condizione atomica (`X = A`, `Y <= 2.0`) e freccia verso la classe predetta.
+   - **Scheda "Testo Raw" (Icona Codice):** Fornisce la trascrizione testuale grezza monospace classica generata dal motore di regressione, ideale per verifiche di basso livello e copy-paste.
+3. **Navigazione Guidata con Breadcrumb Interattivo:**
+   - Il pannello di destra guida l'utente passo-passo attraverso le diramazioni dell'albero.
+   - **Breadcrumb Stepper:** Una barra superiore con pill cliccabili (`Radice › Passo 1 › ...`) consente di tornare all'indietro a qualsiasi decisione precedente con un solo click.
+   - **Pulsanti di Bivio:** Ogni opzione di split è presentata con un pulsante a larghezza intera provvisto di icona orientata (`ARROW_RIGHT`), indicante l'attributo e la condizione di filtro.
+4. **Card Risultato Foglia ad Alta Visibilità:**
+   - Al raggiungimento della foglia, il pannello si trasforma in una card evidenziata verde con icona di successo (`CHECK_CIRCLE`), visualizzando il **valore continuo stimato a grandi cifre (36px)** (es. `1.0000`, `10.0000`).
+   - Sono mostrate statistiche riassuntive sul percorso decisionale (profondità raggiunta, numero di passi e nome modello) insieme ai pulsanti **"Nuova Predizione"** e **"Indietro di un passo"**.
 
 ---
 
