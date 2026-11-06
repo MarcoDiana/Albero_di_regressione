@@ -38,3 +38,20 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Build binari e classi compilate ###
+bin/
+**/bin/
+
+### File dump serializzati dell'albero ###
+*.dmp
+
+### File temporanei e di servizio ###
+*.log
+*.tmp
+*.bak
+
+### Diario passo-passo dell'estensione (non tracciare su git) ###
+diario-estensione.*
+log-estensione.*
+*diario*
