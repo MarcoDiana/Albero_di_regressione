@@ -19,7 +19,13 @@ public class DbAccess {
     private String SERVER = "localhost";
 
     /** Nome del database a cui connettersi. */
-    private String DATABASE = "MapUser";
+    private String DATABASE = "MapDB";
+
+    /** Porta su cui il DBMS MySQL accetta le connessioni. */
+    private final int PORT = 3306;
+
+    /** Nome dell'utente per l'accesso alla base di dati. */
+    private String USER_ID = "MapUser";
 
     /** Password dell'utente del database. */
     private String PASSWORD = "map";
@@ -37,9 +43,9 @@ public class DbAccess {
         try {
             Class.forName(DRIVER_CLASS_NAME);
 
-            String url = DBMS + "://" + SERVER + "/" + DATABASE;
+            String url = DBMS + "://" + SERVER + ":" + PORT + "/" + DATABASE;
 
-            conn = DriverManager.getConnection(url, "root", PASSWORD);
+            conn = DriverManager.getConnection(url, USER_ID, PASSWORD);
         } catch (ClassNotFoundException e) {
             throw new DatabaseConnectionException("JDBC Driver not found: " + e.getMessage());
         } catch (SQLException e) {
