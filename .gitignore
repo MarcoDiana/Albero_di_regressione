@@ -54,4 +54,10 @@ bin/
 ### Diario passo-passo dell'estensione (non tracciare su git) ###
 diario-estensione.*
 log-estensione.*
-*diario*
+*diario*
+
+### Script e file di servizio ###
+scripts/
+**/scripts/
+*.ps1
+
