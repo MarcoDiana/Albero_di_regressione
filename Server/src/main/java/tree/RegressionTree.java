@@ -13,7 +13,6 @@ import data.Attribute;
 import data.ContinuousAttribute;
 import data.Data;
 import data.DiscreteAttribute;
-import utility.Keyboard;
 import server.UnknownValueException;
 
 /**
@@ -240,25 +239,32 @@ public class RegressionTree implements Serializable {
 	}
 
 	/**
-	 * Predice il valore di classe di un nuovo esempio acquisito da tastiera.
+	 * Predice il valore di classe di un nuovo esempio interagendo con il client.
 	 *
 	 * Se la radice corrente è una foglia restituisce il valore predetto; altrimenti
-	 * visualizza le condizioni dello split (formulateQuery), acquisisce la risposta
-	 * dell'utente e prosegue ricorsivamente sul sotto-albero selezionato.
+	 * invia al client il messaggio {@code "QUERY"} seguito dalle condizioni dello split
+	 * ({@link SplitNode#formulateQuery()}), legge la scelta del ramo dal flusso di input
+	 * e prosegue ricorsivamente sul sotto-albero selezionato.
 	 *
+	 * @param out flusso di output verso il client
+	 * @param in  flusso di input dal client
 	 * @return valore di classe predetto per l'esempio
-	 * @throws UnknownValueException se la risposta non individua un ramo valido del nodo di split
+	 * @throws UnknownValueException  se la risposta non individua un ramo valido del nodo di split
+	 * @throws IOException            se si verifica un errore di comunicazione con il client
+	 * @throws ClassNotFoundException se l'oggetto ricevuto dal client non è riconosciuto
 	 */
-	public Double predictClass() throws UnknownValueException {
+	public Double predictClass(ObjectOutputStream out, ObjectInputStream in)
+			throws UnknownValueException, IOException, ClassNotFoundException {
 		if (root instanceof LeafNode) {
 			return ((LeafNode) root).getPredictedClassValue();
 		} else {
-			System.out.println(((SplitNode) root).formulateQuery());
-			int risp = Keyboard.readInt();
+			out.writeObject("QUERY");
+			out.writeObject(((SplitNode) root).formulateQuery());
+			int risp = Integer.parseInt(in.readObject().toString());
 			if (risp < 0 || risp >= root.getNumberOfChildren())
 				throw new UnknownValueException(
 						"The answer should be an integer between 0 and " + (root.getNumberOfChildren() - 1) + "!");
-			return childTree[risp].predictClass();
+			return childTree[risp].predictClass(out, in);
 		}
 	}
 
