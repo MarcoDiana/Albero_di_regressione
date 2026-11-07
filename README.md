@@ -20,6 +20,7 @@ Il core matematico include persistenza relazionale su database MySQL (`MapDB`), 
 ## 📑 Indice dei Contenuti
 
 - [Panoramica del Progetto](#panoramica-del-progetto)
+- [⚡ Esecuzione Rapida con Script Batch (.bat / .sh)](#-esecuzione-rapida-con-script-batch-bat--sh)
 - [Architettura del Sistema](#architettura-del-sistema)
 - [Indice della Documentazione](#indice-della-documentazione)
 - [Guida Rapida all'Avvio](#guida-rapida-allavvio)
@@ -50,6 +51,27 @@ Il software affronta problemi di regressione numerica supervisionata:
 - **Persistenza Binaria (`.dmp`):** Serializzazione del modello su disco per interrogazioni immediate a freddo.
 
 ---
+
+## ⚡ Esecuzione Rapida con Script Batch (.bat / .sh)
+
+Per garantire la massima ergonomia operativa e soddisfare sia il rigore accademico sia gli standard industriali, il progetto include una suite modulare di script per ambiente Windows (`.bat`) e sistemi Unix/Linux/macOS (`.sh`), affiancata dalla cartella `sql/` con gli script SQL di avvio rapido:
+
+| Script Windows | Script Unix | Descrizione |
+|---|---|---|
+| **`build.bat`** | `build.sh` | Compila e impacchetta entrambi i fat-JAR (`Server` e `Client`) saltando i test per la massima velocità. |
+| **`init-db.bat [-prova]`** | `init-db.sh [-prova]` | Inizializza il database `MapDB` ed utente `MapUser` (`sql/01-init-schema.sql`). Con il flag `-prova`, inserisce anche i dataset dimostrativi `provaC` e `servo` (`sql/02-sample-data.sql`). |
+| **`start-server.bat`** | `start-server.sh` | Avvia il Server Spring Boot REST su porta `8080` (con Swagger UI su `/swagger-ui.html`). |
+| **`start-client.bat`** | `start-client.sh` | Avvia il Client Vaadin Flow su porta `8081` (apre automaticamente il browser su `http://localhost:8081`). |
+| **`run-local.bat [-prova]`** | `run-local.sh [-prova]` | **Orchestratore All-in-One**: controlla i prerequisiti, compila se necessario, inizializza il DB con tabelle demo se specificato `-prova`, avvia Server e Client in console separate e apre la web UI nel browser. |
+| **`test.bat`** | `test.sh` | Esegue l'intera suite di test automatizzati (64 test) con Maven a 0 fallimenti e 0 errori. |
+
+```cmd
+:: Esempio di avvio rapido all-in-one con tabelle demo:
+run-local.bat -prova
+```
+
+---
+
 
 ## Architettura del Sistema
 
@@ -228,6 +250,15 @@ Le versioni ad alta definizione pronte per la stampa e la consultazione offline 
 │       ├── architettura-uml-oop.pdf
 │       ├── documentazione-test.pdf
 │       └── README.pdf
+├── sql/                                # Script SQL di inizializzazione database
+│   ├── 01-init-schema.sql              # Creazione database MapDB ed utente MapUser
+│   └── 02-sample-data.sql              # Tabelle dimostrative provaC (15 tuple) e servo (167 tuple)
+├── build.bat / build.sh                # Compilazione ed impacchettamento JAR
+├── init-db.bat / init-db.sh            # Inizializzazione database locale (con supporto opzionale a -prova)
+├── start-server.bat / start-server.sh  # Avvio backend Spring Boot REST (porta 8080)
+├── start-client.bat / start-client.sh  # Avvio frontend Vaadin Flow (porta 8081 con auto-open browser)
+├── run-local.bat / run-local.sh        # Orchestratore locale All-in-One (supporta -prova)
+├── test.bat / test.sh                  # Esecuzione suite automatizzata (64 test)
 ├── pom.xml                             # Root POM aggregator (Java 21 LTS, javadoc aggregate 3.11.2)
 └── README.md                           # Panoramica e indice principale
 ```

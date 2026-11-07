@@ -46,7 +46,26 @@ mvn clean dependency:resolve
 
 Il sistema si connette a un database relazionale denominato **`MapDB`** tramite l'utente dedicato **`MapUser`** (con password **`map`**).
 
-### 3.1 Script SQL Completo (Copia e Incolla)
+### 3.1 Inizializzazione Rapida Tramite Script Batch e Cartella `sql/`
+
+Il progetto include nella cartella radice `sql/` gli script SQL ufficiali pronti all'uso:
+- **`sql/01-init-schema.sql`**: crea il database `MapDB` e l'utente `MapUser` con password `map`.
+- **`sql/02-sample-data.sql`**: crea e popola le tabelle di test `provaC` (15 tuple) e `servo` (167 tuple).
+
+Per eseguire l'inizializzazione automatica del database su MySQL locale:
+- **Database pulito (senza tabelle demo):**
+  ```cmd
+  init-db.bat
+  ```
+- **Database con tabelle dimostrative (`provaC` e `servo`):**
+  ```cmd
+  init-db.bat -prova
+  ```
+*(Su Linux/macOS utilizzare `./init-db.sh` o `./init-db.sh -prova`)*
+
+---
+
+### 3.2 Script SQL Completo (Esecuzione Manuale Alternativa)
 
 Accedere a MySQL da terminale (`mysql -u root -p`), da MySQL Workbench o dal tool *Database* integrato in IntelliJ IDEA ed eseguire il seguente script SQL:
 
@@ -141,7 +160,31 @@ INSERT INTO servo (motor, screw, pgain, vgain, class) VALUES
 
 ## 4. Compilazione e Avvio Passo-Passo
 
-### 4.1 Metodo A: Compilazione ed Esecuzione da Riga di Comando (CLI)
+### 4.1 Metodo Consigliato: Avvio Rapido Tramite Script Batch (.bat / .sh)
+
+Per eseguire l'intero stack in un singolo comando con verifica prerequisiti, compilazione e apertura automatica del browser:
+
+```cmd
+:: Avvio All-in-One con popolamento tabelle demo:
+run-local.bat -prova
+```
+
+Lo script `run-local.bat`:
+1. Inizializza il database `MapDB` su MySQL con le tabelle `provaC` e `servo`.
+2. Compila i fat-JAR di `Server` e `Client` se non già presenti.
+3. Avvia il server REST su porta `8080` in una finestra console separata.
+4. Esegue il polling finché il server non è operativo.
+5. Avvia il client Vaadin Flow su porta `8081` in una finestra console separata e **apre automaticamente il browser** su `http://localhost:8081`.
+
+Sono inoltre disponibili gli script modulari singoli:
+- `build.bat`: compila con `mvn clean package -DskipTests`.
+- `start-server.bat`: avvia il server REST su porta `8080`.
+- `start-client.bat`: avvia il client Web su porta `8081`.
+- `test.bat`: esegue la suite dei 64 test con Maven.
+
+---
+
+### 4.2 Metodo A: Compilazione ed Esecuzione Manuale da Riga di Comando (CLI)
 
 #### 1. Compilazione del Progetto
 Posizionarsi nella cartella radice del progetto:
@@ -174,7 +217,7 @@ Il Client si collegherà immediatamente al Server locale sulla porta `8080` most
 
 ---
 
-### 4.2 Metodo B: Compilazione ed Esecuzione da IntelliJ IDEA
+### 4.3 Metodo B: Compilazione ed Esecuzione da IntelliJ IDEA
 
 Grazie alla configurazione nativa Maven, eseguire l'applicazione da IntelliJ IDEA è immediato:
 
@@ -194,7 +237,7 @@ Grazie alla configurazione nativa Maven, eseguire l'applicazione da IntelliJ IDE
 ---
 
 
-### 4.3 Validazione dell'Installazione tramite Test Automatizzati
+### 4.4 Validazione dell'Installazione tramite Test Automatizzati
 
 Per verificare istantaneamente che l'ambiente sia pronto, che il database MySQL `MapDB` sia raggiungibile e che tutti i moduli siano operativi al 100%, è possibile eseguire l'intera suite di test automatizzati:
 

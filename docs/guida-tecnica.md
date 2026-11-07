@@ -579,3 +579,18 @@ La correttezza matematica, la robustezza e la conformità architetturale del sis
 
 - Per la matrice completa di tracciabilità requisiti e le schede tecniche dettagliate, consultare [docs/documentazione-test.md](documentazione-test.md).
 
+
+
+---
+
+## 9. Automazione dell'Esecuzione Locale e Script Batch
+
+A supporto dell'operatività rapida e della riproducibilità sia in contesti accademici di valutazione sia in scenari di sviluppo continuo, il progetto adotta un layer di automazione basato su script modulari nativi Windows (`.bat`) e POSIX (`.sh`), affiancati dalla cartella `sql/`:
+
+### 9.1 Architettura degli Script
+- **`build.bat` / `build.sh`**: coordina la build Maven multi-modulo generando fat-JAR standalone eseguibili con Tomcat incorporato.
+- **`init-db.bat` / `init-db.sh`**: interfaccia il DBMS MySQL locale mediante introspezione delle directory di default e supporto all'opzione dinamica `-prova` per il dataset dimostrativo `provaC` (15 esempi) e benchmark `servo` (167 esempi).
+- **`start-server.bat` / `start-server.sh`**: avvia il container Spring Boot Tomcat del backend esponendo OpenAPI e Swagger UI su porta `8080`.
+- **`start-client.bat` / `start-client.sh`**: avvia l'interfaccia Vaadin Flow su porta `8081` innescando l'apertura automatica del browser tramite `Client.BrowserLauncher`.
+- **`run-local.bat` / `run-local.sh`**: orchestratore di coordinamento tra i processi backend e frontend con healthcheck polling HTTP prima del lancio del client.
+- **`test.bat` / `test.sh`**: garantisce la non-regressione automatizzata dell'intera matrice dei 64 requisiti di test.
