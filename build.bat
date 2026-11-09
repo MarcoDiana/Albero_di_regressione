@@ -1,56 +1,52 @@
 @echo off
 setlocal
+cd /d "%~dp0"
 
-echo ===============================================================================
-echo   ALBERO DI REGRESSIONE - COMPILAZIONE E PACKAGING DEI MODULI [MAVEN]
-echo ===============================================================================
+echo.
+echo ================================================
+echo   ALBERO DI REGRESSIONE - BUILD
+echo ================================================
+echo.
 
 where java >nul 2>&1
 if errorlevel 1 (
-    echo [ERRORE] Java non trovato nel PATH di sistema.
-    echo Assicurati di aver installato Java 21+ e configurato JAVA_HOME.
+    echo [ERRORE] Java non trovato nel PATH. Installa Java 21+.
+    echo.
     pause
     exit /b 1
 )
 
 where mvn >nul 2>&1
 if errorlevel 1 (
-    echo [ERRORE] Apache Maven non trovato nel PATH di sistema.
-    echo Assicurati di aver installato Maven e configurato il PATH.
-    pause
-    exit /b 1
-)
-
-echo [1/3] Java e Maven rilevati correttamente.
-echo [2/3] Compilazione ed impacchettamento fat-JAR: Server e Client...
-echo.
-
-call mvn clean package -DskipTests
-if errorlevel 1 (
+    echo [ERRORE] Maven non trovato nel PATH. Installa Maven.
     echo.
-    echo [ERRORE] La compilazione Maven e fallita. Controlla i log sopra riportati.
     pause
     exit /b 1
 )
 
+echo Compilazione in corso, attendi qualche istante...
 echo.
-echo [3/3] Verifica artefatti generati:
-if exist "Server\target\Server-1.0-SNAPSHOT.jar" (
-    echo   - Server JAR: OK [Server\target\Server-1.0-SNAPSHOT.jar]
-) else (
-    echo   [ATTENZIONE] Server JAR non trovato!
+
+call mvn clean package -DskipTests -B -q > build.log 2>&1
+if errorlevel 1 (
+    echo [ERRORE] Build FALLITA. Prime righe di errore:
+    echo.
+    powershell -NoProfile -Command "Select-String -Path 'build.log' -Pattern '\[ERROR\]' | Select-Object -First 15 | ForEach-Object { $_.Line }"
+    echo.
+    echo Log completo: build.log
+    echo.
+    pause
+    exit /b 1
 )
 
-if exist "Client\target\Client-1.0-SNAPSHOT.jar" (
-    echo   - Client JAR: OK [Client\target\Client-1.0-SNAPSHOT.jar]
-) else (
-    echo   [ATTENZIONE] Client JAR non trovato!
-)
-
+echo   [OK] Compilazione completata.
+if exist "Server\target\Server-1.0-SNAPSHOT.jar" echo   [OK] Server\target\Server-1.0-SNAPSHOT.jar
+if exist "Client\target\Client-1.0-SNAPSHOT.jar" echo   [OK] Client\target\Client-1.0-SNAPSHOT.jar
 echo.
-echo ===============================================================================
-echo   BUILD COMPLETATA CON SUCCESSO!
-echo ===============================================================================
-
+echo ================================================
+echo   BUILD COMPLETATA CON SUCCESSO
+echo ================================================
+echo.
+pause
 endlocal
 exit /b 0

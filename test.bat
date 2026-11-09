@@ -1,44 +1,56 @@
 @echo off
 setlocal
+cd /d "%~dp0"
 
-echo ===============================================================================
-echo   ALBERO DI REGRESSIONE - ESECUZIONE SUITE TEST AUTOMATIZZATI [64 TEST]
-echo ===============================================================================
+echo.
+echo ================================================
+echo   ALBERO DI REGRESSIONE - TEST AUTOMATIZZATI
+echo ================================================
+echo.
 
 where java >nul 2>&1
 if errorlevel 1 (
-    echo [ERRORE] Java non trovato nel PATH di sistema.
-    echo Assicurati di aver installato Java 21+ e configurato JAVA_HOME.
+    echo [ERRORE] Java non trovato nel PATH. Installa Java 21+.
+    echo.
     pause
     exit /b 1
 )
 
 where mvn >nul 2>&1
 if errorlevel 1 (
-    echo [ERRORE] Apache Maven non trovato nel PATH di sistema.
-    echo Assicurati di aver installato Maven e configurato il PATH.
-    pause
-    exit /b 1
-)
-
-echo Avvio esecuzione test JUnit 5 su Server e Client...
-echo.
-
-call mvn test
-if errorlevel 1 (
+    echo [ERRORE] Maven non trovato nel PATH. Installa Maven.
     echo.
-    echo ===============================================================================
-    echo   [ERRORE] Alcuni test sono falliti. Controlla il log sopra.
-    echo ===============================================================================
     pause
     exit /b 1
 )
 
+echo Esecuzione dei test in corso, attendi qualche istante...
 echo.
-echo ===============================================================================
-echo   TUTTI I 64 TEST SONO STATI SUPERATI CON SUCCESSO AL 100%!
-echo   [0 Fallimenti, 0 Errori]
-echo ===============================================================================
 
+call mvn test -B > test.log 2>&1
+set "RESULT=%errorlevel%"
+
+echo Risultato per modulo:
+for /f "tokens=1,* delims= " %%a in ('findstr /R /C:"Tests run:.*Skipped: [0-9]*$" test.log') do echo   %%b
+echo.
+
+if not "%RESULT%"=="0" (
+    echo ================================================
+    echo   [ERRORE] ALCUNI TEST SONO FALLITI
+    echo ================================================
+    echo.
+    powershell -NoProfile -Command "Select-String -Path 'test.log' -Pattern 'FAIL|ERROR\]' | Select-Object -First 15 | ForEach-Object { $_.Line }"
+    echo.
+    echo Log completo: test.log
+    echo.
+    pause
+    exit /b 1
+)
+
+echo ================================================
+echo   TUTTI I TEST SUPERATI
+echo ================================================
+echo.
+pause
 endlocal
 exit /b 0
