@@ -108,6 +108,7 @@ L'intera documentazione tecnica e operativa del progetto è disponibile sia in f
 | **Guida Tecnica Completa** | Architettura three-tier, formulazione matematica $SSE$, quicksort in-place, split discreti/continui, protocollo socket, REST API e Vaadin. | [docs/guida-tecnica.md](docs/guida-tecnica.md) | [docs/pdf/guida-tecnica.pdf](docs/pdf/guida-tecnica.pdf) |
 | **Guida Utente e Installazione** | Script SQL `MapDB`, credenziali `MapUser`/`map`, uso interfaccia Web Vaadin Flow, Swagger UI ed esecuzione CLI. | [docs/guida-utente-installazione.md](docs/guida-utente-installazione.md) | [docs/pdf/guida-utente-installazione.pdf](docs/pdf/guida-utente-installazione.pdf) |
 | **Documentazione della Suite di Test** | Matrice di tracciabilità requisiti, 64 test automatizzati (JUnit 5, Mockito, Spring Boot Test E2E, RestClient) a 0 errori. | [docs/documentazione-test.md](docs/documentazione-test.md) | [docs/pdf/documentazione-test.pdf](docs/pdf/documentazione-test.pdf) |
+| **Estensione del Progetto** | Descrizione sintetica dell'estensione e di cosa è stato aggiunto (Spring Boot REST, Web UI Vaadin, script batch, test). | [docs/estensione.md](docs/estensione.md) | [docs/pdf/estensione.pdf](docs/pdf/estensione.pdf) |
 | **Diagrammi UML e Architettura dei Package** | Raccolta completa e visuale di tutti i diagrammi UML del sistema (Package, Classi per ogni package, Sequenza e Deployment). | [docs/architettura-uml-oop.md](docs/architettura-uml-oop.md) | [docs/pdf/architettura-uml-oop.pdf](docs/pdf/architettura-uml-oop.pdf) |
 | **Documentazione Javadoc** | Documentazione API completa di tutti i package (inclusi metodi e campi privati). | [docs/javadoc/index.html](docs/javadoc/index.html) | — |
 | **README di Progetto** | Panoramica sintetica, architettura, badge, comandi di build e avvio. | [README.md](README.md) | [docs/pdf/README.pdf](docs/pdf/README.pdf) |
@@ -234,12 +235,14 @@ Le versioni ad alta definizione pronte per la stampa e la consultazione offline 
 ├── docs/                               # Documentazione completa di progetto
 │   ├── guida-tecnica.md                # Guida Tecnica Completa
 │   ├── guida-utente-installazione.md   # Guida Utente ed Esempi
+│   ├── estensione.md                   # Descrizione dell'Estensione (Spring Boot REST + Vaadin Web UI)
 │   ├── architettura-uml-oop.md         # 11 Diagrammi UML ufficiali
 │   ├── documentazione-test.md          # Matrice di tracciabilità e schede test
 │   ├── javadoc/                        # Javadoc HTML aggregato (visibilità private completa)
 │   └── pdf/                            # Versioni PDF ad alta definizione dei documenti
 │       ├── guida-tecnica.pdf
 │       ├── guida-utente-installazione.pdf
+│       ├── estensione.pdf
 │       ├── architettura-uml-oop.pdf
 │       ├── documentazione-test.pdf
 │       └── README.pdf
