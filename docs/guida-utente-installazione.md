@@ -210,14 +210,17 @@ Grazie alla configurazione nativa Maven, eseguire l'applicazione da IntelliJ IDE
 
 1. **Apertura del Progetto:**  
    Avviare IntelliJ IDEA, selezionare *File > Open...* e scegliere la cartella radice del progetto (`Albero di regressione (Java)`). IntelliJ riconoscerà automaticamente il `pom.xml` principale e sincronizzerà i moduli `Server` e `Client`.
+
 2. **Avvio del Server:**
    - Navigare nell'albero di progetto a sinistra in:  
      `Server > src > main > java > Main.java`
+
    - Cliccare con il tasto destro sul file o sul metodo `main` e selezionare **Run 'Main.main()'**.
    - Nella console di output inferiore apparirà: `Server is listening on port 8080`.
 3. **Avvio del Client:**
    - Navigare in:  
      `Client > src > main > java > Client > Main.java`
+
    - Cliccare con il tasto destro e selezionare **Run 'Client.Main.main()'**.
    - Interagire direttamente nella console integrata di IntelliJ IDEA.
 
@@ -276,12 +279,14 @@ Starting prediction phase!
 ### 5.2 Caso d'Uso 2: Caricamento Rapido da Archivio Binario (`.dmp`)
 
 Se l'albero è già stato appreso in una sessione precedente, non occorre interrogare nuovamente il database:
+
 1. Avviare il Client e inserire `2`.
 2. Alla richiesta `File name:` inserire:
    ```text
    provaC
    ```
    *(oppure `provaC.dmp`)*.
+
 3. Il Server deserializza istantaneamente l'albero dal file su disco e risponde con `OK`.
 4. Si entra immediatamente nella fase di predizione.
 
@@ -314,6 +319,7 @@ QUERY
    [1] X = 'B'
    ```
    Questa volta digitiamo `0` (ramo $X = 'A'$).
+
 3. Sul ramo $X = 'A'$, l'algoritmo valuta l'attributo continuo $Y$ con soglia ottima a $3.0$:
    ```text
    QUERY
@@ -420,6 +426,7 @@ Una volta avviato, aprire il browser all'indirizzo:
 ### 6.5 Esplorazione e Collaudo con Swagger UI
 
 Per esplorare o collaudare direttamente gli endpoint REST:
+
 1. Accedere a `http://localhost:8080/swagger-ui.html`.
 2. Nella sezione **Regression Tree API**, saranno visualizzati i tre endpoint documentati:
    - `POST /api/trees/learn`

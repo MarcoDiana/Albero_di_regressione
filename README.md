@@ -10,6 +10,7 @@
 [![Javadoc](https://img.shields.io/badge/Javadoc-Aggregate%20(Private)-brightgreen.svg)](docs/javadoc/index.html)
 
 Sistema distribuito in Java per l'apprendimento induttivo, la serializzazione binaria e la predizione supervisionata mediante **Alberi di Regressione** (Regression Trees). Il sistema integra un'architettura duale:
+
 1. **Modalità Socket TCP Concorrente (Console):** demone multithread su porta `8080` con client terminale interattivo.
 2. **Modalità Web Enterprise (REST & Vaadin):** backend Spring Boot 3.4.3 con REST API stateless, documentazione interattiva OpenAPI/Swagger UI su porta `8080` (`http://localhost:8080/swagger-ui.html`) e interfaccia web reattiva in puro Java con Vaadin Flow su porta `8081` (`http://localhost:8081`).
 
@@ -39,6 +40,7 @@ Il core matematico include persistenza relazionale su database MySQL (`MapDB`), 
 ## Panoramica del Progetto
 
 Il software affronta problemi di regressione numerica supervisionata:
+
 - **Induzione Ricorsiva dell'Albero:** Minimizzazione progressiva della Somma dei Quadrati degli Errori ($SSE$) sui nodi interni.
 - **Split Polimorfici:**
   - *Attributi Discreti (`DiscreteNode`):* partizionamento multi-ramo con scansione lineare post-ordinamento contiguo.

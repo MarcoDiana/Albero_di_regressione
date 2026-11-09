@@ -7,6 +7,7 @@ Il progetto originale dell'**Albero di Regressione** nasce come applicazione did
 L'**estensione** modernizza l'intero sistema trasformandolo in una **piattaforma applicativa distribuita e fruibile via Web**, disaccoppiata e reattiva, senza tuttavia alterare o rimuovere il funzionamento originario.
 
 In sintesi, l'estensione consente di:
+
 - Addestrare o caricare l'albero di regressione sia attraverso servizi Web standard, sia con la classica applicazione a console.
 - Visualizzare la struttura dell'albero e le regole decisionali estratte sia in formato testuale, sia come **diagramma grafico visuale** direttamente nel browser.
 - Effettuare la predizione guidata in modalità **stateless** tramite pulsanti interattivi, eliminando la necessità di tenere thread o socket bloccati in attesa dell'input dell'utente.
@@ -19,7 +20,9 @@ In sintesi, l'estensione consente di:
 L'estensione introduce diversi blocchi funzionali e miglioramenti:
 
 ### 2.1 Backend Web RESTful (Spring Boot)
+
 Il modulo Server è stato arricchito con un'infrastruttura basata su **Spring Boot**, che affianca il server socket esistente:
+
 - **API REST su protocollo HTTP/JSON:** esposizione di endpoint standard che permettono di:
   - Addestrare l'albero leggendo i dati da una tabella del database relazionale MySQL.
   - Caricare un albero precedentemente salvato su file binario serializzato (`.dmp`).
@@ -32,7 +35,9 @@ Il modulo Server è stato arricchito con un'infrastruttura basata su **Spring Bo
 ---
 
 ### 2.2 Interfaccia Grafica Web Reattiva (Vaadin Flow)
+
 Il modulo Client è stato integrato con una Web Application reattiva sviluppata con **Vaadin Flow**, accessibile dal browser all'indirizzo `http://localhost:8081`:
+
 - **Visualizzazione Grafica dell'Albero (Diagramma Mermaid):** l'albero di decisione viene convertito e visualizzato dinamicamente come un diagramma vettoriale chiaro e leggibile, con nodi di divisione azzurri, rami con le relative condizioni e foglie verdi con il valore numerico predetto.
 - **Elenco Schematizzato delle Regole (IF-THEN):** presentazione chiara e leggibile delle regole decisionali estratte dall'albero, strutturate a schede e organizzate con etichette visive per ogni singola condizione.
 - **Predizione Guidata e Intuitiva:**
@@ -44,7 +49,9 @@ Il modulo Client è stato integrato con una Web Application reattiva sviluppata 
 ---
 
 ### 2.3 Script Batch di Gestione per Windows (.bat)
+
 Nella cartella principale del progetto sono stati inseriti 4 script dedicati per semplificare l'uso quotidiano:
+
 - **`build.bat`:** compila i moduli ed effettua il packaging degli archivi eseguibili in modalità silenziosa, mostrando a video solo la conferma di completamento senza schermate dispersive.
 - **`test.bat`:** esegue l'intera suite di test automatizzati mostrando a video un riassunto immediato per modulo ed eliminando automaticamente ogni file temporaneo.
 - **`start_server.bat`:** avvia il server REST su porta `8080`, mostrando un chiaro messaggio quando il servizio è pronto per ricevere richieste.
@@ -53,13 +60,17 @@ Nella cartella principale del progetto sono stati inseriti 4 script dedicati per
 ---
 
 ### 2.4 Suite di Test Automatizzati
+
 Per garantire che le nuove funzionalità non abbiano introdotto difetti o alterato la logica esistente, è stata implementata una suite completa di **64 test automatizzati** (JUnit 5 e Mockito):
+
 - **Test sul Server (44 test):** coprono l'induzione dell'albero, la gestione delle eccezioni, la serializzazione, i servizi REST e la navigazione passo-passo.
 - **Test sul Client (20 test):** validano la conversione visuale in diagrammi ad albero, il corretto tracciamento delle regole, il client HTTP e l'apertura del browser.
 
 ---
 
 ### 2.5 Conservazione e Piena Retrocompatibilità
+
 L'aggiunta della componente Web e degli script non ha in alcun modo sostituito o compromesso il progetto originario:
+
 - I programmi a riga di comando via socket TCP (`Main` del server e `Main` del client) rimangono funzionanti e richiamabili.
 - Tutte le classi per l'accesso a MySQL, per la definizione degli attributi e per il calcolo della regressione continuano ad operare regolarmente in entrambi i contesti.

@@ -66,6 +66,7 @@ graph TD
 ### 1.2 Modularità Maven
 
 Il progetto è strutturato secondo le best practice di Apache Maven con configurazione multi-modulo gerarchica:
+
 - **`pom.xml` (Root Aggregator):** definisce la versione target di Java (Java 21 LTS — bytecode release target 21), le proprietà di codifica sorgente UTF-8 e la configurazione centralizzata di `maven-javadoc-plugin` (versione 3.11.2) con visibilità `private` e doclint disabilitato per produrre la documentazione aggregata dell'intero sistema.
 - **`Server/pom.xml`:** modulo contenente il motore matematico, il server socket multithread, il package di connessione al database MySQL (dipendenza `com.mysql:mysql-connector-j:8.4.0`) e la gestione delle eccezioni.
 - **`Client/pom.xml`:** modulo standalone contenente l'interfaccia a riga di comando per la connessione remota e le utilità di acquisizione da tastiera.
@@ -154,6 +155,7 @@ il miglior nodo di split viene estratto in tempo $O(1)$ invocando semplicemente 
 ### 2.4 Partizionamento per Attributi Discreti (`tree.DiscreteNode`)
 
 Per un attributo categorico $A$, il dominio ammissibile è composto da valori discreti distinti $\{v_1, v_2, \dots, v_k\}$.
+
 1. L'algoritmo ordina preliminarmente il sottoinsieme di esempi in base ai valori dell'attributo $A$ tramite quicksort in-place.
 2. In seguito all'ordinamento, tutti gli esempi che condividono il medesimo valore discreto risultano **strettamente contigui** nell'intervallo di indici $[beginExampleIndex, endExampleIndex]$.
 3. Il metodo `DiscreteNode.setSplitInfo` esegue una singola scansione lineare del sottoinsieme. Non appena rileva una variazione di valore tra la riga $i-1$ e la riga $i$, chiude la partizione corrente e ne apre una successiva, memorizzando per ciascuna:
@@ -165,14 +167,17 @@ Per un attributo categorico $A$, il dominio ammissibile è composto da valori di
 ### 2.5 Partizionamento per Attributi Continui (`tree.ContinuousNode`)
 
 Per un attributo continuo a valori reali $C$, una partizione multi-ramo comporterebbe un partizionamento eccessivo (overfitting) o degenere. Pertanto, `ContinuousNode` genera uno **split binario ottimo**:
+
 - Ramo sinistro ($child = 0$): test $C \le \tau$
 - Ramo destro ($child = 1$): test $C > \tau$
 
 La determinazione della soglia ottima $\tau$ procede secondo la seguente strategia:
+
 1. Gli esempi nel range $[beginExampleIndex, endExampleIndex]$ vengono ordinati in ordine crescente rispetto all'attributo $C$.
 2. Le soglie candidate ottime non sono infinite, ma corrispondono ai soli punti di discontinuità in cui il valore continuo cambia tra due esempi consecutivi ordinati ($val_i \neq val_{i-1}$).
 3. Per ogni punto di taglio candidato $cut = i$, si valuta la varianza ipotetica dei due rami istanziando due oggetti `LeafNode` temporanei:
    $$V_{cand}(i) = SSE([begin, i-1]) + SSE([i, end])$$
+
 4. Viene selezionato il punto di taglio $i^*$ che minimizza $V_{cand}(i)$, impostando $\tau = val_{i^*-1}$.
 5. **Caso limite (Degenerazione):** Se tutti gli esempi nell'intervallo presentano lo stesso identico valore per l'attributo continuo, non esiste alcun taglio valido ($bestCut < 0$). In questo caso viene generato un unico ramo coprente l'intero intervallo con operatore `"<="`, portando l'albero a terminare l'espansione e trasformare il nodo in foglia.
 
@@ -183,6 +188,7 @@ $$med = \left\lfloor \frac{inf + sup}{2} \right\rfloor$$
 
 #### Partizionamento Polimorfico (RTTI)
 In base al tipo a tempo di esecuzione dell'attributo esplicativo, viene invocato il partizionatore specializzato:
+
 - `partition(DiscreteAttribute attribute, int inf, int sup)`: opera su `String` mediante confronto lessicografico `compareTo`.
 - `partition(ContinuousAttribute attribute, int inf, int sup)`: opera su `Double` mediante confronto numerico naturale.
 
@@ -204,12 +210,15 @@ Questa proprietà garantisce formalmente che la profondità massima dello stack 
 ### 2.7 Condizioni di Arresto dell'Induzione (`isLeaf`)
 
 L'espansione ricorsiva di un nodo in sotto-alberi nel metodo `learnTree` si arresta, generando un `LeafNode`, al verificarsi di almeno una delle seguenti condizioni:
+
 1. **Condizione di Cardinalità Minima (Stopping Rule predefinita):**
    $$|S| = (end - begin + 1) \le \text{numberOfExamplesPerLeaf}$$
    Nel costruttore principale di `RegressionTree`, la soglia è fissata al **10%** della cardinalità totale del dataset:
    $$\text{numberOfExamplesPerLeaf} = \left\lfloor \frac{n \cdot 10}{100} \right\rfloor$$
+
 2. **Condizione di Assenza di Split Utili:**
    Se il miglior nodo di split individuato genera un numero di figli $\le 1$ (`root.getNumberOfChildren() <= 1`), significa che tutti gli esempi nel sottoinsieme presentano valori costanti su tutti gli attributi esplicativi. Non è possibile alcuna ulteriore discriminazione informativa.
+
 3. **Purezza del Sottoinsieme:**
    Se la varianza $SSE(S) = 0$, tutti gli esempi possiedono il medesimo valore target; qualsiasi split ulteriore risulterebbe ridondante.
 
@@ -266,6 +275,7 @@ L'espansione ricorsiva di un nodo in sotto-alberi nel metodo `learnTree` si arre
 ## 4. Protocollo di Comunicazione Client-Server e Serializzazione Binaria
 
 La comunicazione tra il client CLI e il thread worker `ServerOneClient` avviene su socket TCP/IP tramite flussi a oggetti Java:
+
 - `java.io.ObjectOutputStream`: serializza tipi primitivi, comandi e messaggi applicativi.
 - `java.io.ObjectInputStream`: deserializza gli oggetti ricevuti preservando la tipizzazione forte.
 
@@ -348,6 +358,7 @@ sequenceDiagram
 Tutte le classi che compongono la struttura ad albero (`RegressionTree`, `Node`, `LeafNode`, `SplitNode`, `ContinuousNode`, `DiscreteNode`, `SplitInfo`, `Attribute`, `DiscreteAttribute`, `ContinuousAttribute`) implementano l'interfaccia `java.io.Serializable` con campo esplicito `private static final long serialVersionUID = 1L;`.
 
 Vantaggi del meccanismo:
+
 - **Persistenza Completa del Grafo degli Oggetti:** La serializzazione preserva l'intera gerarchia dell'albero indotto, inclusi tutti i rami, le soglie ottime, le etichette degli attributi e i valori continui calcolati.
 - **Riuso Immediato:** Evita di dover ripetere l'addestramento su database MySQL (operazione computazionalmente onerosa su dataset estesi), consentendo l'avvio immediato delle predizioni da file binario in tempo $O(1)$.
 - **Integrità Versione:** `serialVersionUID` previene inconsistenze di deserializzazione in caso di evoluzioni binarie incompatibili della classe.
@@ -433,6 +444,7 @@ L'estensione Web introduce il paradigma **stateless**: ogni richiesta HTTP invia
 
 ### 6.2 Contratti DTO Immutabili (Package `dto`)
 La comunicazione tra client e server avviene tramite contratti JSON modellati come **Java Records** immutabili nel package `dto` (condiviso semanticamente tra Server e Client):
+
 1. **`TreeRequestDto(String tableName)`:** incapsula il nome della tabella del database o dell'archivio da elaborare.
 2. **`PredictionStepDto(boolean isLeaf, Double predictedValue, String attributeName, List<String> branchOptions)`:** descrive lo stato del nodo raggiunto nell'albero. Se `isLeaf == true`, contiene il valore numerico stimato `predictedValue` ed esclude opzioni di scelta; se `isLeaf == false`, specifica l'attributo di split (`attributeName`) e l'elenco delle condizioni dei rami figli (`branchOptions`).
 3. **`TreeResponseDto(String tableName, String treeRules, PredictionStepDto rootStep)`:** restituito dopo l'apprendimento o il caricamento, contiene il nome della tabella, la trascrizione completa dell'albero e delle regole IF-THEN (`treeRules`), e il DTO descrittivo della radice (`rootStep`).
@@ -442,11 +454,13 @@ I Record garantiscono costruttori canonici, metodi di accesso uniformi, implemen
 
 ### 6.3 Navigazione Stateless Ricorsiva in `RegressionTree`
 Per supportare il paradigma stateless senza alterare il funzionamento del socket, la classe `tree.RegressionTree` è stata arricchita con due metodi chiave con retrocompatibilità totale:
+
 - **`public PredictionStepDto navigate(List<Integer> path) throws UnknownValueException`:** a partire dalla radice dell'albero, itera sequenzialmente lungo gli indici specificati in `path`. Se l'indice è valido e il nodo corrente è uno `SplitNode`, discende nel sotto-albero `childTree[branchIndex]`. Se il percorso conduce a un `LeafNode`, restituisce un `PredictionStepDto` foglia; altrimenti restituisce il bivio decisionale corrente con le condizioni di split formulate dinamicamente.
 - **`public String getRules()`:** metodo thread-safe che genera la stringa completa dell'albero e delle regole IF-THEN senza richiedere flussi di output standard.
 
 ### 6.4 Backend Spring Boot REST API
 Il backend è ospitato nel modulo `Server` su porta `8080`:
+
 - **`server.ServerApplication`:** classe di avvio annotata con `@SpringBootApplication` e `@Import({TreeService.class, TreeController.class, GlobalExceptionHandler.class})`.
 - **`server.TreeService`:** servizio applicativo `@Service` dotato di una cache concorrente in memoria `ConcurrentHashMap<String, RegressionTree>`. Se un albero non è in cache al momento della predizione, viene automaticamente ripristinato dal file binario `.dmp` su disco.
 - **`server.TreeController`:** controller `@RestController` su base path `/api/trees`:
@@ -460,11 +474,13 @@ Il backend è ospitato nel modulo `Server` su porta `8080`:
 
 ### 6.5 Documentazione OpenAPI 3 e Swagger UI
 L'integrazione della dipendenza `org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5` espone:
+
 - Specifiche OpenAPI 3 formali in formato JSON all'endpoint `/v3/api-docs`.
 - Interfaccia grafica interattiva all'endpoint `http://localhost:8080/swagger-ui.html` (reindirizzata a `/swagger-ui/index.html`), consentendo a sviluppatori e collaudatori di testare in tempo reale le richieste REST con validazione degli schemi e visualizzazione immediata delle risposte HTTP.
 
 ### 6.6 Frontend Web Vaadin Flow (Porta 8081)
 Il modulo `Client` include un frontend web moderno in puro Java con **Vaadin Flow 24.6.4**:
+
 - **`Client.ClientApplication`:** entrypoint Spring Boot che avvia il server web embedded su porta `8081`.
 - **`Client.TreeRestClientService`:** client HTTP dichiarativo basato su Spring `RestClient` (`@Service`) che comunica con il backend su `http://localhost:8080`.
 - **`Client.TreeMermaidConverter`:** componente di utilità che esegue il parsing delle regole testuali fornite da `RegressionTree.getRules()`, ricostruisce l'albero decisionale mediante un Trie e genera codice Mermaid `graph TD` conforme, colorando i nodi split in azzurro e le foglie continue in verde.
