@@ -35,10 +35,28 @@ public class GlobalExceptionHandler {
      * @param ex eccezione FileNotFoundException
      * @return risposta 404 con messaggio di errore
      */
+    /**
+     * Gestisce la mancata individuazione di un file serializzato su disco (404 Not Found).
+     *
+     * @param ex eccezione FileNotFoundException
+     * @return risposta 404 con messaggio di errore
+     */
     @ExceptionHandler(FileNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleFileNotFound(FileNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("error", "File non trovato: " + ex.getMessage()));
+    }
+
+    /**
+     * Gestisce la mancata individuazione di una risorsa statica o endpoint (404 Not Found).
+     *
+     * @param ex eccezione NoResourceFoundException
+     * @return risposta 404 con messaggio di errore
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Risorsa non trovata: " + ex.getResourcePath()));
     }
 
     /**

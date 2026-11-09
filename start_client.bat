@@ -13,22 +13,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
-if not exist "Client\target\Client-1.0-SNAPSHOT.jar" (
-    echo [INFO] JAR del Client non trovato in Client\target\.
-    echo Avvio compilazione automatica con Maven...
-    echo.
-    where mvn >nul 2>&1
-    if errorlevel 1 (
-        echo [ERRORE] Apache Maven non trovato nel PATH di sistema.
-        pause
-        exit /b 1
-    )
-    call mvn clean package -DskipTests
-    if errorlevel 1 (
-        echo [ERRORE] Compilazione fallita. Impossibile avviare il Client.
-        pause
-        exit /b 1
-    )
+where mvn >nul 2>&1
+if errorlevel 1 (
+    echo [ERRORE] Apache Maven non trovato nel PATH di sistema.
+    echo Assicurati di aver installato Maven e configurato il PATH.
+    pause
+    exit /b 1
 )
 
 echo.
@@ -40,6 +30,6 @@ echo Premi CTRL+C in questa finestra per arrestare il Client.
 echo ===============================================================================
 echo.
 
-java -jar "Client\target\Client-1.0-SNAPSHOT.jar"
+call mvn -pl Client spring-boot:run
 
 endlocal
