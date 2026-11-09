@@ -583,9 +583,11 @@ La correttezza matematica, la robustezza e la conformità architetturale del sis
 
 ---
 
-## 9. Script Batch di Avvio Rapido (.bat)
+## 9. Suite di Script Batch Windows (.bat)
 
-Il progetto mette a disposizione due script batch per Windows situati nella cartella radice per facilitare l'esecuzione dei processi:
+Il progetto mette a disposizione 4 script batch per Windows situati nella cartella radice:
 
-- **`start_server.bat`**: verifica la presenza di Java 21, compila il progetto tramite Maven se il fat-JAR `Server-1.0-SNAPSHOT.jar` non è presente (grazie al goal `repackage` di `spring-boot-maven-plugin`), e lancia il backend REST esponendo Tomcat su porta `8080`.
-- **`start_client.bat`**: verifica i prerequisiti, compila se necessario, e lancia il client web Vaadin Flow su porta `8081`, innescando l'apertura automatica del browser predefinito di sistema tramite il componente `BrowserLauncher`.
+- **`build.bat`**: verifica i prerequisiti ed effettua `mvn clean package -DskipTests`, producendo gli archivi eseguibili standalone `Server-1.0-SNAPSHOT.jar` e `Client-1.0-SNAPSHOT.jar` con dipendenze incorporate in `BOOT-INF/lib/`.
+- **`test.bat`**: esegue `mvn test` validando i 64 requisiti architetturali e funzionali coperti da JUnit 5 e Mockito.
+- **`start_server.bat`**: avvia il backend REST su porta `8080` (con reindirizzamento radice a Swagger UI).
+- **`start_client.bat`**: avvia il frontend Vaadin Flow su porta `8081` innescando l'apertura automatica del browser predefinito via `BrowserLauncher`.

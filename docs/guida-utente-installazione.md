@@ -141,23 +141,33 @@ INSERT INTO servo (motor, screw, pgain, vgain, class) VALUES
 
 ## 4. Compilazione e Avvio Passo-Passo
 
-### 4.1 Metodo Consigliato: Avvio Rapido Tramite Script Batch (.bat)
+### 4.1 Metodo Consigliato: Script Batch di Gestione (.bat)
 
-Per chi dispone dell'ambiente configurato (Java 21 e MySQL con database `MapDB`), sono forniti due comodi script batch nella directory radice:
+Per chi dispone dell'ambiente configurato (Java 21 e MySQL con database `MapDB`), sono forniti 4 script batch nella directory radice:
 
-1. **Avvio del Server REST (Porta 8080):**
+1. **Compilazione dei Moduli e Generazione Fat-JAR:**
+   ```cmd
+   build.bat
+   ```
+   Esegue `mvn clean package -DskipTests` producendo gli archivi eseguibili `Server-1.0-SNAPSHOT.jar` e `Client-1.0-SNAPSHOT.jar`.
+
+2. **Esecuzione dei Test Automatizzati:**
+   ```cmd
+   test.bat
+   ```
+   Esegue l'intera suite dei 64 test con Maven e certifica che non vi siano regressioni (100% success).
+
+3. **Avvio del Server REST (Porta 8080):**
    ```cmd
    start_server.bat
    ```
-   Lo script compila automaticamente il modulo con Maven (se il file JAR non è già presente) e avvia il backend Spring Boot con Tomcat incorporato su porta `8080`.
-   - Swagger UI: `http://localhost:8080/swagger-ui.html`
-   - OpenAPI Docs: `http://localhost:8080/v3/api-docs`
+   Avvia il backend Spring Boot con Tomcat incorporato su porta `8080` (con Swagger UI e redirect automatico da `/`).
 
-2. **Avvio del Client Web Vaadin (Porta 8081):**
+4. **Avvio del Client Web Vaadin (Porta 8081):**
    ```cmd
    start_client.bat
    ```
-   Lo script compila automaticamente il modulo (se necessario), avvia il frontend Vaadin Flow su porta `8081` e **apre in automatico il browser predefinito** su `http://localhost:8081`.
+   Avvia il frontend Vaadin Flow su porta `8081` e **apre in automatico il browser predefinito** su `http://localhost:8081`.
 
 ---
 

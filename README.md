@@ -52,14 +52,16 @@ Il software affronta problemi di regressione numerica supervisionata:
 
 ---
 
-## ⚡ Avvio Rapido con Script Batch (.bat)
+## ⚡ Script Batch (.bat) per Windows
 
-Per eseguire comodamente i moduli su ambiente Windows con compilazione automatica (se il JAR non è presente) ed apertura automatica del browser:
+Per semplificare compilazione, testing ed esecuzione su ambiente Windows, sono disponibili 4 script batch nella radice del progetto:
 
 | Script | Descrizione |
 |---|---|
-| **`start_server.bat`** | Compila (se necessario) ed avvia il Server REST Spring Boot su porta `8080` (con Swagger UI su `http://localhost:8080/swagger-ui.html`). |
-| **`start_client.bat`** | Compila (se necessario) ed avvia il Client Web Vaadin Flow su porta `8081` (apre automaticamente il browser predefinito su `http://localhost:8081`). |
+| **`build.bat`** | Compila ed impacchetta i moduli generando i fat-JAR eseguibili standalone (`Server` e `Client`) saltando i test per la massima velocità. |
+| **`test.bat`** | Esegue l'intera suite di 64 test automatizzati (JUnit 5, Mockito, Spring Boot Test E2E) con report a video (0 fallimenti, 0 errori). |
+| **`start_server.bat`** | Avvia il Server REST Spring Boot su porta `8080` con Swagger UI (`http://localhost:8080/swagger-ui.html`) e redirect automatico da `/`. |
+| **`start_client.bat`** | Avvia il Client Web Vaadin Flow su porta `8081` con apertura automatica del browser predefinito (`http://localhost:8081`). |
 
 ---
 
@@ -241,6 +243,8 @@ Le versioni ad alta definizione pronte per la stampa e la consultazione offline 
 │       ├── architettura-uml-oop.pdf
 │       ├── documentazione-test.pdf
 │       └── README.pdf
+├── build.bat                           # Compilazione ed impacchettamento fat-JAR
+├── test.bat                            # Esecuzione automatizzata dei 64 test JUnit 5
 ├── start_server.bat                    # Avvio rapido backend Spring Boot REST (porta 8080)
 ├── start_client.bat                    # Avvio rapido frontend Vaadin Flow (porta 8081 con auto-open browser)
 ├── pom.xml                             # Root POM aggregator (Java 21 LTS, javadoc aggregate 3.11.2)
