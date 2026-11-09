@@ -9,15 +9,15 @@ L'architettura del software adotta un modello a tre livelli (**Three-Tier Archit
 ```mermaid
 graph TD
     subgraph ClientTier ["1. Livello di Presentazione (Client Tier)"]
-        CLI["Client CLI (Socket TCP) - Client.Main"]
-        WEB["Client Web (Vaadin Flow 24) - :8081"]
+        CLI["Client CLI (Socket TCP)<br/>Client.Main"]
+        WEB["Client Web (Vaadin Flow 24)<br/>Porta 8081"]
     end
 
     subgraph ServerTier ["2. Livello Applicativo (Server Tier)"]
-        TCPL["MultiServer & ServerOneClient (TCP :8080)"]
-        REST["Spring Boot REST API (HTTP :8080)"]
-        CORE["Motore RegressionTree (Induzione & Navigazione)"]
-        DATA["Astrazione Dati in Memoria (data.Data)"]
+        TCPL["MultiServer & ServerOneClient<br/>(Socket TCP :8080)"]
+        REST["Spring Boot REST API<br/>(HTTP :8080)"]
+        CORE["Motore RegressionTree<br/>(Induzione & Navigazione)"]
+        DATA["Astrazione Dataset in Memoria<br/>(data.Data)"]
         
         TCPL --> CORE
         REST --> CORE
@@ -25,11 +25,11 @@ graph TD
     end
 
     subgraph DataTier ["3. Livello di Persistenza (Data Tier)"]
-        DB["MySQL Server 8.0 (MapDB) via JDBC"]
-        FS["Archivi Serializzati (.dmp) su Filesystem"]
+        DB[("MySQL Database Server 8.0<br/>Schema MapDB via JDBC")]
+        FS[("Archivi Serializzati .dmp<br/>Filesystem Locale")]
         
         DATA --> DB
-        CORE -. Java Serialization .-> FS
+        CORE -.->|"Java Serialization"| FS
     end
 
     CLI <-->|"Socket TCP / Object Streams"| TCPL
@@ -106,46 +106,46 @@ Il server avvia un listener multithread (`MultiServer`) su porta `8080`. Per ogn
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Utente
-    participant Client as "Client.Main"
-    participant Server as "ServerOneClient"
-    participant Engine as "RegressionTree"
-    participant DB as "MySQL MapDB"
+    actor Utente as Utente
+    participant Client as Client.Main
+    participant Server as ServerOneClient
+    participant Engine as RegressionTree
+    participant DB as MySQL MapDB
 
-    Note over Client,Server: Connessione TCP stabilita su porta 8080
+    Note over Client,Server: Connessione TCP su porta 8080
 
-    alt Caso d'Uso 1: Addestramento da Database
+    alt Caso d'Uso 1: Apprendimento da Database
         Utente->>Client: Scelta 1 + nome tabella (es. "provaC")
         Client->>Server: writeObject(0) [Acquisizione]
         Client->>Server: writeObject("provaC")
         Server->>DB: SELECT * FROM provaC
-        DB-->>Server: Schema e tuple
+        DB-->>Server: Metadati e record
         Server-->>Client: writeObject("OK")
         Client->>Server: writeObject(1) [Apprendimento]
         Server->>Engine: new RegressionTree(data)
         Engine-->>Server: Albero indotto
         Server->>Server: tree.salva("provaC.dmp")
         Server-->>Client: writeObject("OK")
-    else Caso d'Uso 2: Caricamento da Archivio Binario
+    else Caso d'Uso 2: Caricamento da Archivio .dmp
         Utente->>Client: Scelta 2 + nome archivio (es. "provaC")
         Client->>Server: writeObject(2) [Caricamento]
         Client->>Server: writeObject("provaC")
         Server->>Engine: RegressionTree.carica("provaC.dmp")
-        Engine-->>Server: Albero ripristinato da file
+        Engine-->>Server: Albero ripristinato
         Server-->>Client: writeObject("OK")
     end
 
-    loop Fase di Predizione Interattiva
+    loop Predizione Interattiva (finché risp == 'Y')
         Client->>Server: writeObject(3) [Avvio Predizione]
         loop Attraversamento Nodi Interni
             Server->>Client: writeObject("QUERY") + formulateQuery()
             Client->>Utente: Mostra opzioni di split
-            Utente->>Client: Selezione ramo (indice intero)
+            Utente->>Client: Inserimento scelta ramo
             Client->>Server: writeObject(scelta)
         end
-        Note over Server: Raggiunto nodo LeafNode
+        Note over Server,Engine: Raggiunto LeafNode
         Server-->>Client: writeObject("OK") + predictedValue
-        Client->>Utente: Stampa valore continuo stimato
+        Client->>Utente: Visualizza valore stimato
     end
 ```
 
@@ -154,32 +154,33 @@ sequenceDiagram
 L'estensione Web introduce un'architettura **stateless** basata su Spring Boot e Vaadin Flow 24, eliminando la necessità di mantenere thread o connessioni socket persistenti bloccate durante l'interazione con l'utente:
 
 ```mermaid
-graph LR
-    subgraph ClientLayer ["Frontend Web (:8081)"]
-        UI["MainView (Vaadin UI)"]
-        RCS["TreeRestClientService"]
+graph TD
+    subgraph ClientLayer ["1. Frontend Web (Porta 8081)"]
+        UI["MainView (Interfaccia Grafica Vaadin Flow 24)"]
+        RCS["TreeRestClientService (Client HTTP Spring RestClient)"]
         UI --> RCS
     end
 
-    subgraph ServerLayer ["Backend REST (:8080)"]
-        TC["TreeController (/api/trees)"]
-        TS["TreeService (In-Memory Cache)"]
-        SW["Swagger UI / OpenAPI 3"]
+    subgraph ServerLayer ["2. Backend RESTful Spring Boot (Porta 8080)"]
+        TC["TreeController (/api/trees: learn, load, predict)"]
+        TS["TreeService (Cache In-Memory ConcurrentHashMap)"]
+        SW["Documentazione Interattiva Swagger UI / OpenAPI 3"]
         
-        RCS <-->|"POST HTTP/JSON"| TC
         TC --> TS
         TC -.-> SW
     end
 
-    subgraph CoreLayer ["Core & Persistenza"]
-        RT["RegressionTree.navigate(path)"]
-        DB[(MySQL MapDB)]
-        FS[(Archivi .dmp)]
+    subgraph CoreLayer ["3. Core Algoritmico & Persistenza"]
+        RT["RegressionTree (Navigazione Stateless: navigate(path))"]
+        DB[("Database MySQL 8.0 (MapDB)")]
+        FS[("Archivi Binari Serializzati (.dmp)")]
         
         TS --> RT
         RT --> DB
         RT --> FS
     end
+
+    RCS <-->|"Richieste HTTP POST (Payload JSON)"| TC
 ```
 
 - **Contratti DTO Immutabili (`dto`):** scambiati in formato JSON tramite Java Records (`TreeRequestDto`, `TreeResponseDto`, `PredictRequestDto`, `PredictionStepDto`).
