@@ -579,3 +579,13 @@ La correttezza matematica, la robustezza e la conformità architetturale del sis
 
 - Per la matrice completa di tracciabilità requisiti e le schede tecniche dettagliate, consultare [docs/documentazione-test.md](documentazione-test.md).
 
+
+
+---
+
+## 9. Script Batch di Avvio Rapido (.bat)
+
+Il progetto mette a disposizione due script batch per Windows situati nella cartella radice per facilitare l'esecuzione dei processi:
+
+- **`start_server.bat`**: verifica la presenza di Java 21, compila il progetto tramite Maven se il fat-JAR `Server-1.0-SNAPSHOT.jar` non è presente (grazie al goal `repackage` di `spring-boot-maven-plugin`), e lancia il backend REST esponendo Tomcat su porta `8080`.
+- **`start_client.bat`**: verifica i prerequisiti, compila se necessario, e lancia il client web Vaadin Flow su porta `8081`, innescando l'apertura automatica del browser predefinito di sistema tramite il componente `BrowserLauncher`.

@@ -20,6 +20,7 @@ Il core matematico include persistenza relazionale su database MySQL (`MapDB`), 
 ## 📑 Indice dei Contenuti
 
 - [Panoramica del Progetto](#panoramica-del-progetto)
+- [⚡ Avvio Rapido con Script Batch (.bat)](#-avvio-rapido-con-script-batch-bat)
 - [Architettura del Sistema](#architettura-del-sistema)
 - [Indice della Documentazione](#indice-della-documentazione)
 - [Guida Rapida all'Avvio](#guida-rapida-allavvio)
@@ -50,6 +51,18 @@ Il software affronta problemi di regressione numerica supervisionata:
 - **Persistenza Binaria (`.dmp`):** Serializzazione del modello su disco per interrogazioni immediate a freddo.
 
 ---
+
+## ⚡ Avvio Rapido con Script Batch (.bat)
+
+Per eseguire comodamente i moduli su ambiente Windows con compilazione automatica (se il JAR non è presente) ed apertura automatica del browser:
+
+| Script | Descrizione |
+|---|---|
+| **`start_server.bat`** | Compila (se necessario) ed avvia il Server REST Spring Boot su porta `8080` (con Swagger UI su `http://localhost:8080/swagger-ui.html`). |
+| **`start_client.bat`** | Compila (se necessario) ed avvia il Client Web Vaadin Flow su porta `8081` (apre automaticamente il browser predefinito su `http://localhost:8081`). |
+
+---
+
 
 ## Architettura del Sistema
 
@@ -228,6 +241,8 @@ Le versioni ad alta definizione pronte per la stampa e la consultazione offline 
 │       ├── architettura-uml-oop.pdf
 │       ├── documentazione-test.pdf
 │       └── README.pdf
+├── start_server.bat                    # Avvio rapido backend Spring Boot REST (porta 8080)
+├── start_client.bat                    # Avvio rapido frontend Vaadin Flow (porta 8081 con auto-open browser)
 ├── pom.xml                             # Root POM aggregator (Java 21 LTS, javadoc aggregate 3.11.2)
 └── README.md                           # Panoramica e indice principale
 ```
