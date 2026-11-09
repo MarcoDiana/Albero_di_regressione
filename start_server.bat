@@ -24,16 +24,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Avvio in corso, attendi qualche istante...
-echo.
-echo   Server:   http://localhost:8080
-echo   Swagger:  http://localhost:8080/swagger-ui.html
-echo.
-echo Premi CTRL+C per arrestare il Server.
-echo ------------------------------------------------
+echo [AVVIO] Server in avvio, attendi qualche istante...
 echo.
 
-call mvn -pl Server spring-boot:run -q -B -Dspring-boot.run.jvmArguments="--enable-native-access=ALL-UNNAMED" -Dspring-boot.run.arguments="--spring.main.banner-mode=off --logging.level.root=WARN --logging.level.org.springframework.boot.web.embedded.tomcat.TomcatWebServer=INFO"
+call mvn -pl Server spring-boot:run -q -B -Dspring-boot.run.jvmArguments="--enable-native-access=ALL-UNNAMED" -Dspring-boot.run.arguments="--spring.main.banner-mode=off --logging.level.root=WARN --logging.level.org.springframework.boot.web.embedded.tomcat.TomcatWebServer=INFO" 2>&1 | powershell -NoProfile -Command "$input | ForEach-Object { if ($_ -match 'Tomcat started') { Write-Host '================================================'; Write-Host '  [PRONTO] Server avviato correttamente!'; Write-Host ''; Write-Host '  Server:  http://localhost:8080'; Write-Host '  Swagger: http://localhost:8080/swagger-ui.html'; Write-Host ''; Write-Host '  Premi CTRL+C per arrestarlo.'; Write-Host '================================================'; Write-Host '' } elseif ($_ -match 'Tomcat initialized|^WARNING: ') { } else { $_ } }"
 
 echo.
 echo ------------------------------------------------

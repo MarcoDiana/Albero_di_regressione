@@ -24,16 +24,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Avvio in corso, attendi qualche istante...
-echo Il browser si aprira automaticamente.
-echo.
-echo   Client:   http://localhost:8081
-echo.
-echo Premi CTRL+C per arrestare il Client.
-echo ------------------------------------------------
+echo [AVVIO] Client in avvio, attendi qualche istante...
 echo.
 
-call mvn -pl Client spring-boot:run -q -B -Dspring-boot.run.jvmArguments="--enable-native-access=ALL-UNNAMED" -Dspring-boot.run.arguments="--spring.main.banner-mode=off --logging.level.root=WARN --logging.level.org.springframework.boot.web.embedded.tomcat.TomcatWebServer=INFO"
+call mvn -pl Client spring-boot:run -q -B -Dspring-boot.run.jvmArguments="--enable-native-access=ALL-UNNAMED" -Dspring-boot.run.arguments="--spring.main.banner-mode=off --logging.level.root=WARN --logging.level.org.springframework.boot.web.embedded.tomcat.TomcatWebServer=INFO" 2>&1 | powershell -NoProfile -Command "$input | ForEach-Object { if ($_ -match 'Tomcat started') { Write-Host '================================================'; Write-Host '  [PRONTO] Client avviato correttamente!'; Write-Host ''; Write-Host '  Client:  http://localhost:8081'; Write-Host '  Il browser si apre automaticamente.'; Write-Host ''; Write-Host '  Premi CTRL+C per arrestarlo.'; Write-Host '================================================'; Write-Host '' } elseif ($_ -match 'Tomcat initialized|^WARNING: ') { } else { $_ } }"
 
 echo.
 echo ------------------------------------------------
