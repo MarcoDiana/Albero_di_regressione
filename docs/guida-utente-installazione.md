@@ -141,7 +141,37 @@ INSERT INTO servo (motor, screw, pgain, vgain, class) VALUES
 
 ## 4. Compilazione e Avvio Passo-Passo
 
-### 4.1 Metodo A: Compilazione ed Esecuzione da Riga di Comando (CLI)
+### 4.1 Metodo Consigliato: Script Batch di Gestione (.bat)
+
+Per chi dispone dell'ambiente configurato (Java 21 e MySQL con database `MapDB`), sono forniti 4 script batch nella directory radice:
+
+1. **Compilazione dei Moduli e Generazione Fat-JAR:**
+   ```cmd
+   build.bat
+   ```
+   Esegue `mvn clean package -DskipTests` producendo gli archivi eseguibili `Server-1.0-SNAPSHOT.jar` e `Client-1.0-SNAPSHOT.jar`.
+
+2. **Esecuzione dei Test Automatizzati:**
+   ```cmd
+   test.bat
+   ```
+   Esegue l'intera suite dei 64 test con Maven e certifica che non vi siano regressioni (100% success).
+
+3. **Avvio del Server REST (Porta 8080):**
+   ```cmd
+   start_server.bat
+   ```
+   Avvia il backend Spring Boot con Tomcat incorporato su porta `8080` (con Swagger UI e redirect automatico da `/`).
+
+4. **Avvio del Client Web Vaadin (Porta 8081):**
+   ```cmd
+   start_client.bat
+   ```
+   Avvia il frontend Vaadin Flow su porta `8081` e **apre in automatico il browser predefinito** su `http://localhost:8081`.
+
+---
+
+### 4.2 Metodo A: Compilazione ed Esecuzione Manuale da Riga di Comando (CLI)
 
 #### 1. Compilazione del Progetto
 Posizionarsi nella cartella radice del progetto:
@@ -174,7 +204,7 @@ Il Client si collegherà immediatamente al Server locale sulla porta `8080` most
 
 ---
 
-### 4.2 Metodo B: Compilazione ed Esecuzione da IntelliJ IDEA
+### 4.3 Metodo B: Compilazione ed Esecuzione da IntelliJ IDEA
 
 Grazie alla configurazione nativa Maven, eseguire l'applicazione da IntelliJ IDEA è immediato:
 
@@ -194,7 +224,7 @@ Grazie alla configurazione nativa Maven, eseguire l'applicazione da IntelliJ IDE
 ---
 
 
-### 4.3 Validazione dell'Installazione tramite Test Automatizzati
+### 4.4 Validazione dell'Installazione tramite Test Automatizzati
 
 Per verificare istantaneamente che l'ambiente sia pronto, che il database MySQL `MapDB` sia raggiungibile e che tutti i moduli siano operativi al 100%, è possibile eseguire l'intera suite di test automatizzati:
 

@@ -20,6 +20,7 @@ Il core matematico include persistenza relazionale su database MySQL (`MapDB`), 
 ## 📑 Indice dei Contenuti
 
 - [Panoramica del Progetto](#panoramica-del-progetto)
+- [⚡ Avvio Rapido con Script Batch (.bat)](#-avvio-rapido-con-script-batch-bat)
 - [Architettura del Sistema](#architettura-del-sistema)
 - [Indice della Documentazione](#indice-della-documentazione)
 - [Guida Rapida all'Avvio](#guida-rapida-allavvio)
@@ -50,6 +51,20 @@ Il software affronta problemi di regressione numerica supervisionata:
 - **Persistenza Binaria (`.dmp`):** Serializzazione del modello su disco per interrogazioni immediate a freddo.
 
 ---
+
+## ⚡ Script Batch (.bat) per Windows
+
+Per semplificare compilazione, testing ed esecuzione su ambiente Windows, sono disponibili 4 script batch nella radice del progetto:
+
+| Script | Descrizione |
+|---|---|
+| **`build.bat`** | Compila ed impacchetta i moduli generando i fat-JAR eseguibili standalone (`Server` e `Client`) saltando i test per la massima velocità. |
+| **`test.bat`** | Esegue l'intera suite di 64 test automatizzati (JUnit 5, Mockito, Spring Boot Test E2E) con report a video (0 fallimenti, 0 errori). |
+| **`start_server.bat`** | Avvia il Server REST Spring Boot su porta `8080` con Swagger UI (`http://localhost:8080/swagger-ui.html`) e redirect automatico da `/`. |
+| **`start_client.bat`** | Avvia il Client Web Vaadin Flow su porta `8081` con apertura automatica del browser predefinito (`http://localhost:8081`). |
+
+---
+
 
 ## Architettura del Sistema
 
@@ -228,6 +243,10 @@ Le versioni ad alta definizione pronte per la stampa e la consultazione offline 
 │       ├── architettura-uml-oop.pdf
 │       ├── documentazione-test.pdf
 │       └── README.pdf
+├── build.bat                           # Compilazione ed impacchettamento fat-JAR
+├── test.bat                            # Esecuzione automatizzata dei 64 test JUnit 5
+├── start_server.bat                    # Avvio rapido backend Spring Boot REST (porta 8080)
+├── start_client.bat                    # Avvio rapido frontend Vaadin Flow (porta 8081 con auto-open browser)
 ├── pom.xml                             # Root POM aggregator (Java 21 LTS, javadoc aggregate 3.11.2)
 └── README.md                           # Panoramica e indice principale
 ```

@@ -579,3 +579,15 @@ La correttezza matematica, la robustezza e la conformità architetturale del sis
 
 - Per la matrice completa di tracciabilità requisiti e le schede tecniche dettagliate, consultare [docs/documentazione-test.md](documentazione-test.md).
 
+
+
+---
+
+## 9. Suite di Script Batch Windows (.bat)
+
+Il progetto mette a disposizione 4 script batch per Windows situati nella cartella radice:
+
+- **`build.bat`**: verifica i prerequisiti ed effettua `mvn clean package -DskipTests`, producendo gli archivi eseguibili standalone `Server-1.0-SNAPSHOT.jar` e `Client-1.0-SNAPSHOT.jar` con dipendenze incorporate in `BOOT-INF/lib/`.
+- **`test.bat`**: esegue `mvn test` validando i 64 requisiti architetturali e funzionali coperti da JUnit 5 e Mockito.
+- **`start_server.bat`**: avvia il backend REST su porta `8080` (con reindirizzamento radice a Swagger UI).
+- **`start_client.bat`**: avvia il frontend Vaadin Flow su porta `8081` innescando l'apertura automatica del browser predefinito via `BrowserLauncher`.
