@@ -24,9 +24,9 @@ if errorlevel 1 (
 )
 if not exist "Client\target\client.args" (
     echo [INFO] Prima esecuzione: preparazione del Client in corso...
-    call mvn -pl Client compile dependency:build-classpath -Dmdep.outputFile=target\cp.txt -q -B > build.log 2>&1
+    call mvn -pl Client compile dependency:build-classpath -Dmdep.outputFile=target\cp.txt -q -B
     if errorlevel 1 (
-        echo [ERRORE] Preparazione fallita. Vedi build.log
+        echo [ERRORE] Preparazione fallita.
         echo.
         pause
         exit /b 1

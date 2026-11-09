@@ -27,11 +27,12 @@ if errorlevel 1 (
 echo Esecuzione dei test in corso, attendi qualche istante...
 echo.
 
-call mvn test -B > test.log 2>&1
+set "TEMP_TEST_LOG=%TEMP%\albero_test_%RANDOM%.tmp"
+call mvn test -B > "%TEMP_TEST_LOG%" 2>&1
 set "RESULT=%errorlevel%"
 
 echo Risultato per modulo:
-for /f "tokens=1,* delims= " %%a in ('findstr /R /C:"Tests run:.*Skipped: [0-9]*$" test.log') do echo   %%b
+for /f "tokens=1,* delims= " %%a in ('findstr /R /C:"Tests run:.*Skipped: [0-9]*$" "%TEMP_TEST_LOG%"') do echo   %%b
 echo.
 
 if not "%RESULT%"=="0" (
@@ -39,13 +40,14 @@ if not "%RESULT%"=="0" (
     echo   [ERRORE] ALCUNI TEST SONO FALLITI
     echo ================================================
     echo.
-    powershell -NoProfile -Command "Select-String -Path 'test.log' -Pattern 'FAIL|ERROR\]' | Select-Object -First 15 | ForEach-Object { $_.Line }"
+    powershell -NoProfile -Command "Select-String -Path '%TEMP_TEST_LOG%' -Pattern 'FAIL|ERROR\]' | Select-Object -First 15 | ForEach-Object { $_.Line }"
     echo.
-    echo Log completo: test.log
-    echo.
+    if exist "%TEMP_TEST_LOG%" del "%TEMP_TEST_LOG%" >nul 2>&1
     pause
     exit /b 1
 )
+
+if exist "%TEMP_TEST_LOG%" del "%TEMP_TEST_LOG%" >nul 2>&1
 
 echo ================================================
 echo   TUTTI I TEST SUPERATI

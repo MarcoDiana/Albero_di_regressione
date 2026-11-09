@@ -24,9 +24,9 @@ if errorlevel 1 (
 )
 if not exist "Server\target\Server-1.0-SNAPSHOT.jar" (
     echo [INFO] Prima esecuzione: compilazione del Server in corso...
-    call mvn -pl Server -am package -DskipTests -q -B > build.log 2>&1
+    call mvn -pl Server -am package -DskipTests -q -B
     if errorlevel 1 (
-        echo [ERRORE] Compilazione fallita. Vedi build.log
+        echo [ERRORE] Compilazione fallita.
         echo.
         pause
         exit /b 1

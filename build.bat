@@ -27,13 +27,12 @@ if errorlevel 1 (
 echo Compilazione in corso, attendi qualche istante...
 echo.
 
-call mvn clean package -DskipTests -B -q > build.log 2>&1
+call mvn clean package -DskipTests -B -q
 if errorlevel 1 (
-    echo [ERRORE] Build FALLITA. Prime righe di errore:
     echo.
-    powershell -NoProfile -Command "Select-String -Path 'build.log' -Pattern '\[ERROR\]' | Select-Object -First 15 | ForEach-Object { $_.Line }"
-    echo.
-    echo Log completo: build.log
+    echo ================================================
+    echo   [ERRORE] COMPILAZIONE FALLITA
+    echo ================================================
     echo.
     pause
     exit /b 1
