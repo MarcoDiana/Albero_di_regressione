@@ -15,7 +15,6 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-
 where mvn >nul 2>&1
 if errorlevel 1 (
     echo [ERRORE] Maven non trovato nel PATH. Installa Maven.
@@ -23,12 +22,25 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+if not exist "Client\target\client.args" (
+    echo [INFO] Prima esecuzione: preparazione del Client in corso...
+    call mvn -pl Client compile dependency:build-classpath -Dmdep.outputFile=target\cp.txt -q -B > build.log 2>&1
+    if errorlevel 1 (
+        echo [ERRORE] Preparazione fallita. Vedi build.log
+        echo.
+        pause
+        exit /b 1
+    )
+    powershell -NoProfile -Command "$q=[char]34; $cp=(Get-Content 'Client\target\cp.txt' -Raw).Trim().Replace('\','/'); Set-Content -Path 'Client\target\client.args' -Value @('-cp', ($q+'target/classes;'+$cp+$q)) -Encoding ascii"
+)
 
 echo [AVVIO] Client in avvio, attendi qualche istante...
+echo Il browser si aprira automaticamente.
 echo.
 
-call mvn -pl Client spring-boot:run -q -B -Dspring-boot.run.jvmArguments="--enable-native-access=ALL-UNNAMED" -Dspring-boot.run.arguments="--spring.main.banner-mode=off --logging.level.root=WARN --logging.level.org.springframework.boot.web.embedded.tomcat.TomcatWebServer=INFO" 2>&1 | powershell -NoProfile -Command "$input | ForEach-Object { if ($_ -match 'Tomcat started') { Write-Host '================================================'; Write-Host '  [PRONTO] Client avviato correttamente!'; Write-Host ''; Write-Host '  Client:  http://localhost:8081'; Write-Host '  Il browser si apre automaticamente.'; Write-Host ''; Write-Host '  Premi CTRL+C per arrestarlo.'; Write-Host '================================================'; Write-Host '' } elseif ($_ -match 'Tomcat initialized|^WARNING: ') { } else { $_ } }"
-
+pushd Client
+java -XX:+UseSerialGC --enable-native-access=ALL-UNNAMED @target\client.args Client.ClientApplication --spring.main.banner-mode=off --logging.level.root=WARN --logging.level.org.springframework.boot.web.embedded.tomcat.TomcatWebServer=INFO 2>&1 | powershell -NoProfile -Command "$input | ForEach-Object { if ($_ -match 'Tomcat started') { Write-Host '================================================'; Write-Host '  [PRONTO] Client avviato correttamente!'; Write-Host ''; Write-Host '  Client:  http://localhost:8081'; Write-Host '  Il browser si apre automaticamente.'; Write-Host ''; Write-Host '  Premi CTRL+C per arrestarlo.'; Write-Host '================================================'; Write-Host '' } elseif ($_ -match 'Tomcat initialized|^WARNING: ') { } else { $_ } }"
+popd
 echo.
 echo ------------------------------------------------
 echo   Client arrestato.
